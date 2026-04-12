@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>レシピアプリ</title>
+<style>
+body { font-family: sans-serif; margin: 10px; }
+.card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+img { width: 100%; max-height: 200px; object-fit: cover; }
+button { padding: 10px; margin-top: 10px; }
+</style>
+</head>
+
+<body>
+
+<h2>レシピ一覧</h2>
+
+<div id="list"></div>
+
+<hr>
+
+<h3>買い物リスト</h3>
+<ul id="shopping"></ul>
+
+<script>
+let recipes = [
+  {
+    title: "オムライス",
+    image: "https://via.placeholder.com/300",
+    ingredients: ["卵", "ごはん", "ケチャップ"]
+  },
+  {
+    title: "カレー",
+    image: "https://via.placeholder.com/300",
+    ingredients: ["玉ねぎ", "にんじん", "肉"]
+  }
+];
+
+let shoppingList = [];
+
+function render() {
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+
+  recipes.forEach((r, i) => {
+    let div = document.createElement("div");
+    div.className = "card";
+
+    let html = `
+      <img src="${r.image}">
+      <h3>${r.title}</h3>
+      <p>材料：</p>
+    `;
+
+    r.ingredients.forEach((ing, idx) => {
+      html += `<label>
+        <input type="checkbox" data-recipe="${i}" data-ing="${ing}">
+        ${ing}
+      </label><br>`;
+    });
+
+    html += `<button onclick="addToShopping(${i})">買い物リストへ追加</button>`;
+
+    div.innerHTML = html;
+    list.appendChild(div);
+  });
+
+  renderShopping();
+}
+
+function addToShopping(i) {
+  let checked = document.querySelectorAll(`input[data-recipe="${i}"]:checked`);
+
+  checked.forEach(c => {
+    let item = c.dataset.ing;
+    if (!shoppingList.includes(item)) {
+      shoppingList.push(item);
+    }
+  });
+
+  renderShopping();
+}
+
+function renderShopping() {
+  let ul = document.getElementById("shopping");
+  ul.innerHTML = "";
+
+  shoppingList.forEach(item => {
+    let li = document.createElement("li");
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
