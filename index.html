@@ -80,6 +80,62 @@ li {
 .hidden { display:none; }
 
 .topbar { display:flex; justify-content:space-between; }
+/* ===== 全体をアプリ風 ===== */
+body {
+ background:#f2f2f7; /* iOSっぽい背景 */
+}
+
+/* カードを強化 */
+.card, .groupBox, li {
+ border-radius:12px;
+ box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* タイトル */
+h2, h3, h4 {
+ margin:8px 0;
+}
+
+/* ===== ボタン ===== */
+button:not(.tabbar button) {
+ min-height:44px;
+ font-size:16px;
+ padding:10px 12px;
+ border:none;
+ border-radius:10px;
+ background:#007aff;       /* iOSブルー */
+ color:#fff;
+}
+
+/* 押した時 */
+button:active {
+ opacity:0.7;
+}
+
+/* 削除ボタンだけ例外 */
+.delBtn {
+ background:#ff3b30;       /* 赤 */
+ color:#fff;
+}
+
+/* 買い物チェック */
+input[type="checkbox"] {
+ transform:scale(1.3);
+}
+
+/* ===== 入力欄 ===== */
+input, textarea {
+ border:1px solid #ddd;
+ border-radius:10px;
+ background:#fff;
+}
+
+/* ===== グループタイトル ===== */
+.groupTitle {
+ background:#e5e5ea;
+ border-radius:8px;
+}
+ 
 </style>
 </head>
 
