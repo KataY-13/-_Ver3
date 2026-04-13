@@ -6,9 +6,9 @@
 
 <style>
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
-.container { padding:10px 10px 90px; }
+.container { padding:10px 10px 110px; }
 
-/* タブ */
+/* 下タブ（大きめ） */
 .tabbar {
  position:fixed;
  bottom:0;
@@ -19,11 +19,11 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 }
 .tabbar button {
  flex:1;
- padding:18px;
- font-size:16px;
+ padding:27px;
+ font-size:18px;
 }
 
-/* グリッド */
+/* 一覧グリッド */
 .grid {
  display:grid;
  grid-template-columns:repeat(3,1fr);
@@ -34,8 +34,10 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  background:#fff;
  border-radius:8px;
  overflow:hidden;
- font-size:12px;
+ font-size:11px;
 }
+
+/* 一覧画像（変更なし） */
 .card img {
  width:100%;
  height:80px;
@@ -50,7 +52,18 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-weight:bold;
 }
 
-/* 買い物 */
+/* 詳細画像だけ小さく */
+.detail-img {
+ width:60%;
+ max-width:250px;
+ display:block;
+ margin:10px auto;
+ border-radius:10px;
+}
+
+.gray { color:#aaa; text-decoration:line-through; }
+.hidden { display:none; }
+
 li {
  list-style:none;
  background:#fff;
@@ -58,14 +71,6 @@ li {
  padding:10px;
  border-radius:8px;
 }
-
-.gray {
- color:#aaa;
- text-decoration:line-through;
-}
-
-.hidden { display:none; }
-.dragging { opacity:0.5; }
 </style>
 </head>
 
@@ -111,10 +116,7 @@ li {
 <script>
 let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
-let draft = JSON.parse(localStorage.getItem("draft")||"null");
-
 let openGroups={};
-let dragIndex=null;
 
 /* 画面切替 */
 function show(p){
@@ -127,7 +129,7 @@ function show(p){
  search.style.display = (p==="list")?"block":"none";
 
  if(p==="list") list.classList.remove("hidden");
- if(p==="add"){ add.classList.remove("hidden"); loadDraft(); }
+ if(p==="add") add.classList.remove("hidden");
  if(p==="shopping"){ shoppingDiv.classList.remove("hidden"); renderShopping(); }
 }
 
@@ -137,9 +139,11 @@ function renderList(){
  let key=search.value.toLowerCase();
 
  let groups={};
+
  recipes.forEach((r,i)=>{
-  if(!groups[r.group]) groups[r.group]=[];
-  groups[r.group].push({r,i});
+  let g = r.group && r.group.trim() ? r.group : "未分類";
+  if(!groups[g]) groups[g]=[];
+  groups[g].push({r,i});
  });
 
  for(let g in groups){
@@ -182,14 +186,14 @@ function renderList(){
  }
 }
 
-/* 詳細 */
+/* 詳細（ここが変更ポイント） */
 function detailView(i){
  let r=recipes[i];
  detail.classList.remove("hidden");
  list.classList.add("hidden");
 
  let html=`<h2>${r.title}</h2>`;
- if(r.image) html+=`<img src="${r.image}">`;
+ if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
 
  r.ingredients.forEach(g=>{
   html+=`<h3>${g.name}</h3>`;
@@ -210,81 +214,25 @@ function detailView(i){
  detail.innerHTML=html;
 }
 
-/* 分量計算 */
-function parseAmount(str){
- let num=parseFloat(str);
- let unit=str.replace(num,"");
- return {num,unit};
-}
-
+/* 買い物 */
 function addShopping(){
  document.querySelectorAll("#detail input:checked").forEach(c=>{
-  let name=c.dataset.name;
-  let amount=c.dataset.amount;
-
-  let f=shopping.find(s=>s.name===name);
-  if(f){
-   let a=parseAmount(f.amount);
-   let b=parseAmount(amount);
-   if(a.unit===b.unit) f.amount=(a.num+b.num)+a.unit;
-   else f.amount+=" + "+amount;
-  }else{
-   shopping.push({name,amount,checked:false});
-  }
+  shopping.push({
+    name:c.dataset.name,
+    amount:c.dataset.amount
+  });
  });
-
  localStorage.setItem("shopping",JSON.stringify(shopping));
  alert("買い物リストへ追加しました");
 }
 
-/* タッチドラッグ */
 function renderShopping(){
  shopList.innerHTML="";
-
- shopping.sort((a,b)=>a.checked-b.checked);
-
- shopping.forEach((s,i)=>{
+ shopping.forEach(s=>{
   let li=document.createElement("li");
-  li.className=s.checked?"gray":"";
-
-  li.innerHTML=`
-  <input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">
-  ${s.name} (${s.amount})
-  `;
-
-  li.ontouchstart=e=>{
-   dragIndex=i;
-   li.classList.add("dragging");
-  };
-
-  li.ontouchmove=e=>{
-   e.preventDefault();
-   let touch=e.touches[0];
-   let elem=document.elementFromPoint(touch.clientX,touch.clientY);
-   if(!elem || !elem.closest("li")) return;
-
-   let target=[...shopList.children].indexOf(elem.closest("li"));
-   if(target!==dragIndex){
-    let temp=shopping[dragIndex];
-    shopping.splice(dragIndex,1);
-    shopping.splice(target,0,temp);
-    dragIndex=target;
-    renderShopping();
-   }
-  };
-
-  li.ontouchend=()=>{
-   li.classList.remove("dragging");
-  };
-
+  li.textContent=s.name+" ("+s.amount+")";
   shopList.appendChild(li);
  });
-}
-
-function toggle(i){
- shopping[i].checked=!shopping[i].checked;
- localStorage.setItem("shopping",JSON.stringify(shopping));
- renderShopping();
 }
 
 function clearShopping(){
@@ -309,15 +257,14 @@ function saveRecipe(){
    ing.push({name,items});
   });
 
-  let steps=[];
-  stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
-   steps.push((i+1)+". "+t.value);
+  recipes.push({
+   group:group.value,
+   title:title.value,
+   image:img,
+   ingredients:ing
   });
 
-  recipes.push({group:group.value,title:title.value,image:img,ingredients:ing,steps});
   localStorage.setItem("recipes",JSON.stringify(recipes));
-
-  localStorage.removeItem("draft");
   clearForm();
   show("list");
   renderList();
@@ -327,7 +274,9 @@ function saveRecipe(){
   let r=new FileReader();
   r.onload=e=>finish(e.target.result);
   r.readAsDataURL(file);
- }else finish(null);
+ }else{
+  finish(null);
+ }
 }
 
 /* 編集削除 */
@@ -379,23 +328,11 @@ function addStep(){
  stepsArea.appendChild(d);
 }
 
-/* 下書き */
-setInterval(()=>{
- localStorage.setItem("draft",JSON.stringify({
-  group:group.value,
-  title:title.value
- }));
-},2000);
-
-function loadDraft(){
- if(!draft) return;
- group.value=draft.group||"";
- title.value=draft.title||"";
-}
-
+/* クリア（画像も） */
 function clearForm(){
  group.value="";
  title.value="";
+ imageFile.value="";
  ingredientsArea.innerHTML="";
  stepsArea.innerHTML="";
 }
