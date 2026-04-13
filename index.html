@@ -3,96 +3,154 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>レシピアプリ</title>
+
 <style>
 body { font-family: sans-serif; margin: 10px; }
-.card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-img { width: 100%; max-height: 200px; object-fit: cover; }
-button { padding: 10px; margin-top: 10px; }
+.top { display: flex; gap: 10px; margin-bottom: 10px; }
+.card { border: 1px solid #ccc; margin: 10px 0; padding: 5px; }
+img { width: 100%; height: 150px; object-fit: cover; }
+.hidden { display: none; }
+button { padding: 10px; }
+input, textarea { width: 100%; margin: 5px 0; }
 </style>
 </head>
 
 <body>
 
-<h2>レシピ一覧</h2>
+<!-- トップ -->
+<div class="top">
+  <button onclick="showPage('add')">レシピ登録</button>
+  <button onclick="showPage('shopping')">買い物リスト</button>
+</div>
 
-<div id="list"></div>
+<input type="text" id="search" placeholder="検索..." oninput="renderList()">
 
-<hr>
+<!-- 一覧 -->
+<div id="listPage"></div>
 
-<h3>買い物リスト</h3>
-<ul id="shopping"></ul>
+<!-- 詳細 -->
+<div id="detailPage" class="hidden"></div>
+
+<!-- 登録 -->
+<div id="addPage" class="hidden">
+  <h3>レシピ登録</h3>
+  <input id="title" placeholder="タイトル">
+  <input id="image" placeholder="画像URL">
+  <textarea id="ingredients" placeholder="材料（改行で区切る）"></textarea>
+  <textarea id="steps" placeholder="作り方"></textarea>
+  <button onclick="addRecipe()">保存</button>
+</div>
+
+<!-- 買い物 -->
+<div id="shoppingPage" class="hidden">
+  <h3>買い物リスト</h3>
+  <ul id="shoppingList"></ul>
+</div>
 
 <script>
-let recipes = [
-  {
-    title: "オムライス",
-    image: "https://via.placeholder.com/300",
-    ingredients: ["卵", "ごはん", "ケチャップ"]
-  },
-  {
-    title: "カレー",
-    image: "https://via.placeholder.com/300",
-    ingredients: ["玉ねぎ", "にんじん", "肉"]
-  }
-];
+let recipes = JSON.parse(localStorage.getItem("recipes") || "[]");
+let shopping = JSON.parse(localStorage.getItem("shopping") || "[]");
 
-let shoppingList = [];
-
-function render() {
-  let list = document.getElementById("list");
-  list.innerHTML = "";
-
-  recipes.forEach((r, i) => {
-    let div = document.createElement("div");
-    div.className = "card";
-
-    let html = `
-      <img src="${r.image}">
-      <h3>${r.title}</h3>
-      <p>材料：</p>
-    `;
-
-    r.ingredients.forEach((ing, idx) => {
-      html += `<label>
-        <input type="checkbox" data-recipe="${i}" data-ing="${ing}">
-        ${ing}
-      </label><br>`;
-    });
-
-    html += `<button onclick="addToShopping(${i})">買い物リストへ追加</button>`;
-
-    div.innerHTML = html;
-    list.appendChild(div);
-  });
-
-  renderShopping();
+function save() {
+  localStorage.setItem("recipes", JSON.stringify(recipes));
+  localStorage.setItem("shopping", JSON.stringify(shopping));
 }
 
-function addToShopping(i) {
-  let checked = document.querySelectorAll(`input[data-recipe="${i}"]:checked`);
+function showPage(page) {
+  listPage.classList.add("hidden");
+  detailPage.classList.add("hidden");
+  addPage.classList.add("hidden");
+  shoppingPage.classList.add("hidden");
+
+  if (page === "add") addPage.classList.remove("hidden");
+  if (page === "shopping") {
+    shoppingPage.classList.remove("hidden");
+    renderShopping();
+  }
+  if (page === "list") listPage.classList.remove("hidden");
+}
+
+function renderList() {
+  listPage.innerHTML = "";
+  listPage.classList.remove("hidden");
+
+  let keyword = search.value.toLowerCase();
+
+  recipes
+    .filter(r => r.title.toLowerCase().includes(keyword))
+    .forEach((r, i) => {
+      let div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `
+        <img src="${r.image}" onclick="showDetail(${i})">
+        <h3>${r.title}</h3>
+      `;
+      listPage.appendChild(div);
+    });
+}
+
+function showDetail(i) {
+  let r = recipes[i];
+  detailPage.classList.remove("hidden");
+  listPage.classList.add("hidden");
+
+  let html = `<h2>${r.title}</h2>`;
+  html += `<img src="${r.image}">`;
+
+  html += "<h3>材料</h3>";
+  r.ingredients.forEach((ing, idx) => {
+    html += `<label>
+      <input type="checkbox" data-ing="${ing}">
+      ${ing}
+    </label><br>`;
+  });
+
+  html += `<button onclick="addToShopping()">選択した材料を追加</button>`;
+
+  html += "<h3>作り方</h3><p>" + r.steps + "</p>";
+
+  html += `<br><button onclick="showPage('list')">戻る</button>`;
+
+  detailPage.innerHTML = html;
+}
+
+function addRecipe() {
+  let r = {
+    title: title.value,
+    image: image.value,
+    ingredients: ingredients.value.split("\n"),
+    steps: steps.value
+  };
+
+  recipes.push(r);
+  save();
+  renderList();
+  showPage("list");
+}
+
+function addToShopping() {
+  let checked = document.querySelectorAll("#detailPage input:checked");
 
   checked.forEach(c => {
-    let item = c.dataset.ing;
-    if (!shoppingList.includes(item)) {
-      shoppingList.push(item);
+    if (!shopping.includes(c.dataset.ing)) {
+      shopping.push(c.dataset.ing);
     }
   });
 
-  renderShopping();
+  save();
+  alert("追加しました");
 }
 
 function renderShopping() {
-  let ul = document.getElementById("shopping");
-  ul.innerHTML = "";
-
-  shoppingList.forEach(item => {
+  shoppingList.innerHTML = "";
+  shopping.forEach(item => {
     let li = document.createElement("li");
     li.textContent = item;
-    ul.appendChild(li);
+    shoppingList.appendChild(li);
   });
 }
 
-render();
+renderList();
 </script>
 
 </body>
