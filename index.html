@@ -396,15 +396,33 @@ function deleteRecipe(i){
 function addGroup(){
  let div=document.createElement("div");
  div.className="groupBox";
- div.innerHTML=`<input placeholder="グループ名"><div class="items"></div>`;
+ div.innerHTML=`
+  <div style="display:flex; align-items:center; gap:5px;">
+    <input placeholder="グループ名" style="flex:1;">
+    <button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button>
+  </div>
+  <div class="items"></div>
+  <button onclick="addItem(this)">材料追加</button>
+ `;
  ingredientsArea.appendChild(div);
+ // 最初に1行入れる
  addItem(div.querySelector(".items"));
 }
 
 function addItem(container){
+
+ // ボタンから押された場合の対応
+ if(container.tagName === "BUTTON"){
+  container = container.previousElementSibling;
+ }
+
  let row=document.createElement("div");
  row.className="row";
- row.innerHTML=`<input placeholder="材料"><input placeholder="分量"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
+ row.innerHTML=`
+  <input placeholder="材料">
+  <input placeholder="分量">
+  <button class="delBtn" onclick="this.parentNode.remove()">×</button>
+ `;
  container.appendChild(row);
 }
 
