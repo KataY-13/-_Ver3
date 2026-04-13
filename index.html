@@ -6,148 +6,267 @@
 
 <style>
 body { font-family: sans-serif; margin: 10px; }
-.top { display: flex; gap: 10px; margin-bottom: 10px; }
-.card { border: 1px solid #ccc; margin: 10px 0; padding: 5px; }
-img { width: 100%; height: 150px; object-fit: cover; }
-.hidden { display: none; }
-button { padding: 10px; }
-input, textarea { width: 100%; margin: 5px 0; }
+.hidden { display:none; }
+button { padding:8px; margin:5px 0; }
+input, textarea { width:100%; margin:5px 0; }
+
+.card { border:1px solid #ccc; margin:10px 0; }
+img { width:100%; height:150px; object-fit:cover; }
+
+.gray { color:#aaa; text-decoration: line-through; }
 </style>
 </head>
 
 <body>
 
 <!-- トップ -->
-<div class="top">
-  <button onclick="showPage('add')">レシピ登録</button>
-  <button onclick="showPage('shopping')">買い物リスト</button>
+<div>
+<button onclick="show('add')">レシピ登録</button>
+<button onclick="show('shopping')">買い物リスト</button>
 </div>
 
-<input type="text" id="search" placeholder="検索..." oninput="renderList()">
+<input id="search" placeholder="検索" oninput="renderList()">
 
 <!-- 一覧 -->
-<div id="listPage"></div>
+<div id="list"></div>
 
 <!-- 詳細 -->
-<div id="detailPage" class="hidden"></div>
+<div id="detail" class="hidden"></div>
 
 <!-- 登録 -->
-<div id="addPage" class="hidden">
-  <h3>レシピ登録</h3>
-  <input id="title" placeholder="タイトル">
-  <input id="image" placeholder="画像URL">
-  <textarea id="ingredients" placeholder="材料（改行で区切る）"></textarea>
-  <textarea id="steps" placeholder="作り方"></textarea>
-  <button onclick="addRecipe()">保存</button>
+<div id="add" class="hidden">
+<h3>レシピ登録</h3>
+
+<input id="group" placeholder="主菜・副菜など">
+<input id="title" placeholder="タイトル">
+
+<input type="file" id="imageFile">
+
+<div id="ingredientsArea"></div>
+<button onclick="addIngredientGroup()">材料グループ追加</button>
+
+<textarea id="steps" placeholder="作り方"></textarea>
+
+<button onclick="saveRecipe()">保存</button>
+<button onclick="show('list')">戻る</button>
 </div>
 
 <!-- 買い物 -->
-<div id="shoppingPage" class="hidden">
-  <h3>買い物リスト</h3>
-  <ul id="shoppingList"></ul>
+<div id="shopping" class="hidden">
+<h3>買い物リスト</h3>
+<ul id="shopList"></ul>
+<button onclick="clearShopping()">全部削除</button>
+<button onclick="show('list')">戻る</button>
 </div>
 
 <script>
-let recipes = JSON.parse(localStorage.getItem("recipes") || "[]");
-let shopping = JSON.parse(localStorage.getItem("shopping") || "[]");
+let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
+let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
 
-function save() {
-  localStorage.setItem("recipes", JSON.stringify(recipes));
-  localStorage.setItem("shopping", JSON.stringify(shopping));
+let editIndex = null;
+
+function save(){
+ localStorage.setItem("recipes",JSON.stringify(recipes));
+ localStorage.setItem("shopping",JSON.stringify(shopping));
 }
 
-function showPage(page) {
-  listPage.classList.add("hidden");
-  detailPage.classList.add("hidden");
-  addPage.classList.add("hidden");
-  shoppingPage.classList.add("hidden");
+function show(p){
+ list.classList.add("hidden");
+ detail.classList.add("hidden");
+ add.classList.add("hidden");
+ shoppingDiv = document.getElementById("shopping");
+ shoppingDiv.classList.add("hidden");
 
-  if (page === "add") addPage.classList.remove("hidden");
-  if (page === "shopping") {
-    shoppingPage.classList.remove("hidden");
-    renderShopping();
-  }
-  if (page === "list") listPage.classList.remove("hidden");
+ if(p==="list") list.classList.remove("hidden");
+ if(p==="add") add.classList.remove("hidden");
+ if(p==="shopping"){ shoppingDiv.classList.remove("hidden"); renderShopping(); }
 }
 
-function renderList() {
-  listPage.innerHTML = "";
-  listPage.classList.remove("hidden");
+function renderList(){
+ list.innerHTML="";
+ let key=search.value.toLowerCase();
 
-  let keyword = search.value.toLowerCase();
+ let groups={};
 
-  recipes
-    .filter(r => r.title.toLowerCase().includes(keyword))
-    .forEach((r, i) => {
-      let div = document.createElement("div");
-      div.className = "card";
-      div.innerHTML = `
-        <img src="${r.image}" onclick="showDetail(${i})">
-        <h3>${r.title}</h3>
-      `;
-      listPage.appendChild(div);
-    });
+ recipes.forEach((r,i)=>{
+  if(!r.title.toLowerCase().includes(key)) return;
+  if(!groups[r.group]) groups[r.group]=[];
+  groups[r.group].push({r,i});
+ });
+
+ for(let g in groups){
+  let h=document.createElement("h2");
+  h.textContent=g;
+  list.appendChild(h);
+
+  groups[g].forEach(obj=>{
+   let div=document.createElement("div");
+   div.className="card";
+   div.innerHTML=`
+    <img src="${obj.r.image}" onclick="detailView(${obj.i})">
+    <p>${obj.r.title}</p>
+   `;
+   list.appendChild(div);
+  });
+ }
 }
 
-function showDetail(i) {
-  let r = recipes[i];
-  detailPage.classList.remove("hidden");
-  listPage.classList.add("hidden");
+function detailView(i){
+ let r=recipes[i];
+ detail.classList.remove("hidden");
+ list.classList.add("hidden");
 
-  let html = `<h2>${r.title}</h2>`;
-  html += `<img src="${r.image}">`;
+ let html=`<h2>${r.title}</h2><img src="${r.image}">`;
 
-  html += "<h3>材料</h3>";
-  r.ingredients.forEach((ing, idx) => {
-    html += `<label>
-      <input type="checkbox" data-ing="${ing}">
-      ${ing}
-    </label><br>`;
+ r.ingredients.forEach(g=>{
+  html+=`<h3>${g.name}</h3>`;
+  g.items.forEach(item=>{
+   html+=`
+   <label>
+    <input type="checkbox" data-name="${item.name}">
+    ${item.name} (${item.amount})
+   </label><br>`;
+  });
+ });
+
+ html+=`<button onclick="addShopping()">追加</button>`;
+ html+=`<button onclick="editRecipe(${i})">編集</button>`;
+ html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
+ html+=`<button onclick="show('list')">戻る</button>`;
+
+ detail.innerHTML=html;
+}
+
+function addIngredientGroup(){
+ let div=document.createElement("div");
+ div.innerHTML=`
+ <input placeholder="グループ名">
+ <div class="items"></div>
+ <button onclick="addItem(this)">材料追加</button>
+ `;
+ ingredientsArea.appendChild(div);
+}
+
+function addItem(btn){
+ let d=btn.previousElementSibling;
+ let row=document.createElement("div");
+ row.innerHTML=`
+ <input placeholder="材料">
+ <input placeholder="分量">
+ `;
+ d.appendChild(row);
+}
+
+function saveRecipe(){
+ let file=imageFile.files[0];
+ let reader=new FileReader();
+
+ reader.onload=function(){
+  let ing=[];
+  ingredientsArea.childNodes.forEach(g=>{
+   let name=g.children[0].value;
+   let items=[];
+   g.querySelectorAll(".items div").forEach(d=>{
+    let inputs=d.querySelectorAll("input");
+    items.push({name:inputs[0].value,amount:inputs[1].value});
+   });
+   ing.push({name,items});
   });
 
-  html += `<button onclick="addToShopping()">選択した材料を追加</button>`;
-
-  html += "<h3>作り方</h3><p>" + r.steps + "</p>";
-
-  html += `<br><button onclick="showPage('list')">戻る</button>`;
-
-  detailPage.innerHTML = html;
-}
-
-function addRecipe() {
-  let r = {
-    title: title.value,
-    image: image.value,
-    ingredients: ingredients.value.split("\n"),
-    steps: steps.value
+  let data={
+   group:group.value,
+   title:title.value,
+   image:reader.result,
+   ingredients:ing,
+   steps:steps.value
   };
 
-  recipes.push(r);
+  if(editIndex!==null){
+   recipes[editIndex]=data;
+   editIndex=null;
+  }else{
+   recipes.push(data);
+  }
+
+  save();
+  show("list");
+  renderList();
+ };
+
+ if(file) reader.readAsDataURL(file);
+}
+
+function editRecipe(i){
+ let r=recipes[i];
+ show("add");
+ editIndex=i;
+
+ group.value=r.group;
+ title.value=r.title;
+ steps.value=r.steps;
+
+ ingredientsArea.innerHTML="";
+ r.ingredients.forEach(g=>{
+  addIngredientGroup();
+  let last=ingredientsArea.lastChild;
+  last.children[0].value=g.name;
+
+  g.items.forEach(item=>{
+   addItem(last.querySelector("button"));
+   let inputs=last.querySelectorAll(".items div:last-child input");
+   inputs[0].value=item.name;
+   inputs[1].value=item.amount;
+  });
+ });
+}
+
+function deleteRecipe(i){
+ if(confirm("削除する？")){
+  recipes.splice(i,1);
   save();
   renderList();
-  showPage("list");
+  show("list");
+ }
 }
 
-function addToShopping() {
-  let checked = document.querySelectorAll("#detailPage input:checked");
+function addShopping(){
+ document.querySelectorAll("#detail input:checked").forEach(c=>{
+  shopping.push({name:c.dataset.name,checked:false});
+ });
+ save();
+ alert("追加");
+}
 
-  checked.forEach(c => {
-    if (!shopping.includes(c.dataset.ing)) {
-      shopping.push(c.dataset.ing);
-    }
-  });
+function renderShopping(){
+ let ul=shopList;
+ ul.innerHTML="";
 
+ let sorted=[...shopping].sort((a,b)=>a.checked-b.checked);
+
+ sorted.forEach((item,idx)=>{
+  let li=document.createElement("li");
+  li.className=item.checked?"gray":"";
+
+  li.innerHTML=`
+  <input type="checkbox" ${item.checked?"checked":""} onchange="toggle(${idx})">
+  ${item.name}
+  `;
+  ul.appendChild(li);
+ });
+}
+
+function toggle(i){
+ shopping[i].checked=!shopping[i].checked;
+ save();
+ renderShopping();
+}
+
+function clearShopping(){
+ if(confirm("全部消す？")){
+  shopping=[];
   save();
-  alert("追加しました");
-}
-
-function renderShopping() {
-  shoppingList.innerHTML = "";
-  shopping.forEach(item => {
-    let li = document.createElement("li");
-    li.textContent = item;
-    shoppingList.appendChild(li);
-  });
+  renderShopping();
+ }
 }
 
 renderList();
