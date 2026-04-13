@@ -8,7 +8,7 @@
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
-/* ===== 下タブ ===== */
+/* 下タブ */
 .tabbar {
  position:fixed;
  bottom:0;
@@ -23,7 +23,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-size:18px;
 }
 
-/* ===== 一覧 ===== */
+/* 一覧 */
 .grid {
  display:grid;
  grid-template-columns:repeat(3,1fr);
@@ -48,7 +48,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-weight:bold;
 }
 
-/* ===== 詳細 ===== */
+/* 詳細 */
 .detail-img {
  width:60%;
  max-width:250px;
@@ -57,7 +57,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  border-radius:10px;
 }
 
-/* ===== 登録 ===== */
+/* 登録 */
 #add input, #add textarea {
  font-size:16px;
  padding:10px;
@@ -73,7 +73,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  width:100%;
 }
 
-/* 材料グループ */
+/* グループ */
 .groupBox {
  background:#fff;
  padding:8px;
@@ -91,8 +91,10 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .row input:nth-child(1){ flex:2; }
 .row input:nth-child(2){ flex:1; }
 
+/* 削除ボタン（1文字幅） */
 .delBtn {
- width:24px;
+ width:1.8em;
+ min-width:1.8em;
  padding:0;
  font-size:16px;
 }
@@ -112,7 +114,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  flex:1;
 }
 
-/* ===== 買い物 ===== */
+/* 買い物 */
 li {
  list-style:none;
  background:#fff;
@@ -368,8 +370,11 @@ function addGroup(){
  div.className="groupBox";
 
  div.innerHTML=`
- <input placeholder="グループ名">
- <button class="delBtn" onclick="this.parentNode.remove()">×</button>
+ <div style="display:flex; gap:5px; align-items:center;">
+   <input placeholder="グループ名" style="flex:1;">
+   <button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button>
+ </div>
+
  <div class="items"></div>
  <button onclick="addItem(this)">材料追加</button>
  `;
