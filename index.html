@@ -219,11 +219,13 @@ function renderList(){
  let key=search.value.toLowerCase();
  let groups={};
 
- recipes.forEach((r,i)=>{
-  let g=r.group?.trim()||"未分類";
-  if(!groups[g]) groups[g]=[];
-  groups[g].push({r,i});
- });
+ let data={
+ group: group.value.trim() || "未分類",
+ title:title.value,
+ image:img,
+ ingredients:ing,
+ steps
+};
 
  Object.keys(groups).sort().forEach(g=>{
   let title=document.createElement("div");
@@ -288,13 +290,18 @@ function detailView(i){
 
 /* 買い物 */
 function addShopping(){
+ let count=0;
  document.querySelectorAll("#detail input:checked").forEach(c=>{
   shopping.push({name:c.dataset.name,amount:c.dataset.amount,checked:false});
+  count++;
  });
  localStorage.setItem("shopping",JSON.stringify(shopping));
  renderShopping();
+ if(count>0){
+  alert("買い物リストに追加しました");
+ }
 }
-
+ 
 function addManual(){
  shopping.push({name:manualItem.value,amount:manualAmount.value,checked:false});
  manualItem.value="";
@@ -388,13 +395,12 @@ function editRecipe(i){
 
 /* 削除 */
 function deleteRecipe(i){
- if(confirm("削除する？")){
-  recipes.splice(i,1);
-  localStorage.setItem("recipes",JSON.stringify(recipes));
-  renderList();
- }
+ if(!confirm("このレシピを削除しますか？")) return;
+ recipes.splice(i,1);
+ localStorage.setItem("recipes",JSON.stringify(recipes));
+ show("list");
+ renderList();
 }
-
 /* 入力 */
 function addGroup(){
  let div=document.createElement("div");
