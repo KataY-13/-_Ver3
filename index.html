@@ -8,7 +8,7 @@
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
-/* 下タブ */
+/* タブ */
 .tabbar {
  position:fixed;
  bottom:0;
@@ -23,7 +23,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-size:18px;
 }
 
-/* 一覧 */
+/* グリッド */
 .grid {
  display:grid;
  grid-template-columns:repeat(3,1fr);
@@ -60,28 +60,32 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-weight:bold;
 }
 
-/* ===== 登録画面UI強化 ===== */
-#add input,
-#add textarea,
-#add button {
+/* 登録UI */
+#add input, #add textarea, #add button {
  font-size:18px;
- padding:14px;
- margin:8px 0;
+ padding:12px;
+ margin:6px 0;
  width:100%;
  box-sizing:border-box;
- border-radius:8px;
 }
 
-/* ファイル選択 */
-#add input[type="file"] {
- font-size:16px;
+.row {
+ display:flex;
+ gap:5px;
+}
+.row input {
+ flex:1;
+}
+.delBtn {
+ width:40px;
+ background:#eee;
+}
+
+/* ボタン大 */
+.bigBtn {
+ font-size:20px;
  padding:12px;
-}
-
-/* ボタン見た目 */
-#add button {
- background:#fff;
- border:1px solid #ccc;
+ margin:10px 0;
 }
 
 /* 買い物 */
@@ -98,6 +102,12 @@ li {
 
 .gray { color:#aaa; text-decoration:line-through; }
 .hidden { display:none; }
+
+.topbar {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
 </style>
 </head>
 
@@ -112,9 +122,10 @@ li {
 
 <div id="add" class="hidden">
 <h3>レシピ登録</h3>
-<input id="group" placeholder="主菜など">
+
 <input id="title" placeholder="タイトル">
 <input type="file" id="imageFile">
+<input id="group" placeholder="主菜など">
 
 <div id="ingredientsArea"></div>
 <button onclick="addGroup()">材料グループ追加</button>
@@ -127,9 +138,11 @@ li {
 </div>
 
 <div id="shopping" class="hidden">
+<div class="topbar">
 <h3>買い物リスト</h3>
+<button class="bigBtn" onclick="clearShopping()">クリア</button>
+</div>
 <ul id="shopList"></ul>
-<button onclick="clearShopping()">クリア</button>
 </div>
 
 </div>
@@ -144,6 +157,7 @@ li {
 let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
 let openGroups={};
+let dragIndex=null;
 
 /* 画面切替 */
 function show(p){
@@ -160,15 +174,13 @@ function show(p){
  if(p==="shopping"){ shoppingDiv.classList.remove("hidden"); renderShopping(); }
 }
 
-/* 一覧 */
+/* 一覧（並び替え対応） */
 function renderList(){
  list.innerHTML="";
- let key=search.value.toLowerCase();
-
  let groups={};
 
  recipes.forEach((r,i)=>{
-  let g = (r.group && r.group.trim()) ? r.group.trim() : "未分類";
+  let g=r.group && r.group.trim()?r.group.trim():"未分類";
   if(!groups[g]) groups[g]=[];
   groups[g].push({r,i});
  });
@@ -177,10 +189,7 @@ function renderList(){
   let title=document.createElement("div");
   title.className="groupTitle";
   title.textContent=g;
-  title.onclick=()=>{
-   openGroups[g]=!openGroups[g];
-   renderList();
-  };
+  title.onclick=()=>{ openGroups[g]=!openGroups[g]; renderList(); };
   list.appendChild(title);
 
   if(!openGroups[g]) return;
@@ -189,23 +198,32 @@ function renderList(){
   wrap.className="grid";
 
   groups[g].forEach(obj=>{
-   let r=obj.r;
-
-   let hit=r.title.toLowerCase().includes(key);
-   r.ingredients.forEach(gr=>{
-    gr.items.forEach(it=>{
-     if(it.name.toLowerCase().includes(key)) hit=true;
-    });
-   });
-
-   if(!hit) return;
-
    let div=document.createElement("div");
    div.className="card";
+
    div.innerHTML=`
-    <img src="${r.image||''}" onclick="detailView(${obj.i})">
-    <div>${r.title}</div>
+    <img src="${obj.r.image||''}">
+    <div>${obj.r.title}</div>
    `;
+
+   div.onclick=()=>detailView(obj.i);
+
+   /* ドラッグ */
+   div.ontouchstart=()=>dragIndex=obj.i;
+   div.ontouchmove=e=>{
+    let el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+    if(!el || !el.closest(".card")) return;
+    let idx=[...wrap.children].indexOf(el.closest(".card"));
+    if(idx!==dragIndex){
+      let temp=recipes[dragIndex];
+      recipes.splice(dragIndex,1);
+      recipes.splice(idx,0,temp);
+      dragIndex=idx;
+      localStorage.setItem("recipes",JSON.stringify(recipes));
+      renderList();
+    }
+   };
+
    wrap.appendChild(div);
   });
 
@@ -225,70 +243,76 @@ function detailView(i){
  r.ingredients.forEach(g=>{
   html+=`<h3>${g.name}</h3>`;
   g.items.forEach(it=>{
-   html+=`
-   <label>
-    <input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">
-    ${it.name} (${it.amount})
-   </label><br>`;
+   html+=`<label><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">
+   ${it.name} (${it.amount})</label><br>`;
   });
  });
 
- html+=`<button onclick="addShopping()">買い物リストへ追加</button>`;
+ html+=`<h3>作り方</h3>`;
+ r.steps.forEach(s=> html+=s+"<br>");
+
+ html+=`<button class="bigBtn" onclick="addShopping()">買い物リストへ追加</button>`;
+ html+=`<button class="bigBtn" onclick="editRecipe(${i})">編集</button>`;
+ html+=`<button class="bigBtn" onclick="deleteRecipe(${i})">削除</button>`;
  html+=`<button onclick="show('list')">戻る</button>`;
 
  detail.innerHTML=html;
 }
 
-/* 分量計算 */
+/* 分量合計 */
 function parseAmount(str){
- let num=parseFloat(str);
- let unit=str.replace(num,"");
- return {num,unit};
+ let n=parseFloat(str);
+ return {n,unit:str.replace(n,"")};
 }
 
-/* 買い物 */
 function addShopping(){
  document.querySelectorAll("#detail input:checked").forEach(c=>{
-  let name=c.dataset.name;
-  let amount=c.dataset.amount;
-
-  let f=shopping.find(s=>s.name===name);
+  let f=shopping.find(s=>s.name===c.dataset.name);
   if(f){
    let a=parseAmount(f.amount);
-   let b=parseAmount(amount);
-   if(a.unit===b.unit){
-    f.amount=(a.num+b.num)+a.unit;
-   }else{
-    f.amount+=" + "+amount;
-   }
+   let b=parseAmount(c.dataset.amount);
+   if(a.unit===b.unit) f.amount=(a.n+b.n)+a.unit;
+   else f.amount+=" + "+c.dataset.amount;
   }else{
-   shopping.push({name,amount,checked:false});
+   shopping.push({name:c.dataset.name,amount:c.dataset.amount,checked:false});
   }
  });
-
  localStorage.setItem("shopping",JSON.stringify(shopping));
- alert("買い物リストへ追加しました");
+ alert("追加しました");
 }
 
+/* 買い物（ドラッグ） */
 function renderShopping(){
  shopList.innerHTML="";
- shopping.sort((a,b)=>a.checked-b.checked);
-
  shopping.forEach((s,i)=>{
   let li=document.createElement("li");
   li.className=s.checked?"gray":"";
 
   li.innerHTML=`
-   <input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">
-   ${s.name} (${s.amount})
+  <input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">
+  ${s.name} (${s.amount})
   `;
+
+  li.ontouchstart=()=>dragIndex=i;
+  li.ontouchmove=e=>{
+   let el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+   if(!el || !el.closest("li")) return;
+   let idx=[...shopList.children].indexOf(el.closest("li"));
+   if(idx!==dragIndex){
+    let temp=shopping[dragIndex];
+    shopping.splice(dragIndex,1);
+    shopping.splice(idx,0,temp);
+    dragIndex=idx;
+    renderShopping();
+   }
+  };
+
   shopList.appendChild(li);
  });
 }
 
 function toggle(i){
  shopping[i].checked=!shopping[i].checked;
- localStorage.setItem("shopping",JSON.stringify(shopping));
  renderShopping();
 }
 
@@ -305,22 +329,20 @@ function saveRecipe(){
  function finish(img){
   let ing=[];
   ingredientsArea.childNodes.forEach(g=>{
-   let name=g.children[0].value;
    let items=[];
-   g.querySelectorAll(".items div").forEach(d=>{
+   g.querySelectorAll(".row").forEach(d=>{
     let i=d.querySelectorAll("input");
     items.push({name:i[0].value,amount:i[1].value});
    });
-   ing.push({name,items});
+   ing.push({name:g.children[0].value,items});
   });
 
-  recipes.push({
-   group:group.value,
-   title:title.value,
-   image:img,
-   ingredients:ing
+  let steps=[];
+  stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
+   steps.push((i+1)+". "+t.value);
   });
 
+  recipes.push({group:group.value,title:title.value,image:img,ingredients:ing,steps});
   localStorage.setItem("recipes",JSON.stringify(recipes));
   clearForm();
   show("list");
@@ -331,8 +353,23 @@ function saveRecipe(){
   let r=new FileReader();
   r.onload=e=>finish(e.target.result);
   r.readAsDataURL(file);
- }else{
-  finish(null);
+ }else finish(null);
+}
+
+/* 編集削除 */
+function editRecipe(i){
+ let r=recipes[i];
+ show("add");
+ title.value=r.title;
+ group.value=r.group;
+}
+
+function deleteRecipe(i){
+ if(confirm("削除する？")){
+  recipes.splice(i,1);
+  localStorage.setItem("recipes",JSON.stringify(recipes));
+  renderList();
+  show("list");
  }
 }
 
@@ -351,27 +388,24 @@ function addGroup(){
 function addItem(btn){
  let d=btn.previousElementSibling;
  let row=document.createElement("div");
+ row.className="row";
  row.innerHTML=`
  <input placeholder="材料">
  <input placeholder="分量">
- <button onclick="this.parentNode.remove()">削除</button>
+ <button class="delBtn" onclick="this.parentNode.remove()">×</button>
  `;
  d.appendChild(row);
 }
 
 function addStep(){
  let d=document.createElement("div");
- d.innerHTML=`
- <textarea></textarea>
- <button onclick="this.parentNode.remove()">削除</button>
- `;
+ d.innerHTML=`<textarea></textarea>`;
  stepsArea.appendChild(d);
 }
 
-/* クリア */
 function clearForm(){
- group.value="";
  title.value="";
+ group.value="";
  imageFile.value="";
  ingredientsArea.innerHTML="";
  stepsArea.innerHTML="";
