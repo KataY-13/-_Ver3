@@ -5,9 +5,10 @@
 <title>レシピアプリ</title>
 
 <style>
-body { font-family:sans-serif; margin:0; background:#f5f5f5; }
+body { margin:0; font-family:sans-serif; background:#f5f5f5; }
+.container { padding:10px 10px 90px; }
 
-/* 下タブ */
+/* タブ */
 .tabbar {
  position:fixed;
  bottom:0;
@@ -18,14 +19,11 @@ body { font-family:sans-serif; margin:0; background:#f5f5f5; }
 }
 .tabbar button {
  flex:1;
- padding:10px;
- border:none;
- background:none;
+ padding:18px;
+ font-size:16px;
 }
 
-/* コンテンツ */
-.container { padding:10px 10px 60px; }
-
+/* グリッド */
 .grid {
  display:grid;
  grid-template-columns:repeat(3,1fr);
@@ -44,22 +42,30 @@ body { font-family:sans-serif; margin:0; background:#f5f5f5; }
  object-fit:cover;
 }
 
+/* グループ */
+.groupTitle {
+ background:#ddd;
+ padding:10px;
+ margin-top:10px;
+ font-weight:bold;
+}
+
+/* 買い物 */
+li {
+ list-style:none;
+ background:#fff;
+ margin:6px 0;
+ padding:10px;
+ border-radius:8px;
+}
+
 .gray {
  color:#aaa;
  text-decoration:line-through;
 }
 
-li {
- list-style:none;
- background:#fff;
- margin:5px 0;
- padding:8px;
- border-radius:6px;
-}
-
-.drag {
- cursor:grab;
-}
+.hidden { display:none; }
+.dragging { opacity:0.5; }
 </style>
 </head>
 
@@ -70,9 +76,9 @@ li {
 <input id="search" placeholder="検索" oninput="renderList()">
 
 <div id="list"></div>
-<div id="detail" style="display:none"></div>
+<div id="detail" class="hidden"></div>
 
-<div id="add" style="display:none">
+<div id="add" class="hidden">
 <h3>レシピ登録</h3>
 <input id="group" placeholder="主菜など">
 <input id="title" placeholder="タイトル">
@@ -85,9 +91,10 @@ li {
 <button onclick="addStep()">工程追加</button>
 
 <button onclick="saveRecipe()">保存</button>
+<button onclick="clearForm()">クリア</button>
 </div>
 
-<div id="shopping" style="display:none">
+<div id="shopping" class="hidden">
 <h3>買い物リスト</h3>
 <ul id="shopList"></ul>
 <button onclick="clearShopping()">クリア</button>
@@ -95,7 +102,6 @@ li {
 
 </div>
 
-<!-- 下タブ -->
 <div class="tabbar">
 <button onclick="show('list')">一覧</button>
 <button onclick="show('add')">登録</button>
@@ -103,58 +109,87 @@ li {
 </div>
 
 <script>
-let recipes=[];
-let shopping=[];
+let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
+let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
+let draft = JSON.parse(localStorage.getItem("draft")||"null");
+
+let openGroups={};
 let dragIndex=null;
 
+/* 画面切替 */
 function show(p){
- list.style.display="none";
- detail.style.display="none";
- add.style.display="none";
+ list.classList.add("hidden");
+ detail.classList.add("hidden");
+ add.classList.add("hidden");
  shoppingDiv=document.getElementById("shopping");
- shoppingDiv.style.display="none";
+ shoppingDiv.classList.add("hidden");
 
- if(p==="list") list.style.display="block";
- if(p==="add") add.style.display="block";
- if(p==="shopping"){ shoppingDiv.style.display="block"; renderShopping(); }
+ search.style.display = (p==="list")?"block":"none";
+
+ if(p==="list") list.classList.remove("hidden");
+ if(p==="add"){ add.classList.remove("hidden"); loadDraft(); }
+ if(p==="shopping"){ shoppingDiv.classList.remove("hidden"); renderShopping(); }
 }
 
+/* 一覧 */
 function renderList(){
  list.innerHTML="";
  let key=search.value.toLowerCase();
 
- let wrap=document.createElement("div");
- wrap.className="grid";
-
+ let groups={};
  recipes.forEach((r,i)=>{
-  let hit=r.title.toLowerCase().includes(key);
-
-  r.ingredients.forEach(g=>{
-   g.items.forEach(it=>{
-    if(it.name.toLowerCase().includes(key)) hit=true;
-   });
-  });
-
-  if(!hit) return;
-
-  let div=document.createElement("div");
-  div.className="card";
-  div.innerHTML=`
-   <img src="${r.image}" onclick="detailView(${i})">
-   <div>${r.title}</div>
-  `;
-  wrap.appendChild(div);
+  if(!groups[r.group]) groups[r.group]=[];
+  groups[r.group].push({r,i});
  });
 
- list.appendChild(wrap);
+ for(let g in groups){
+  let title=document.createElement("div");
+  title.className="groupTitle";
+  title.textContent=g;
+  title.onclick=()=>{
+   openGroups[g]=!openGroups[g];
+   renderList();
+  };
+  list.appendChild(title);
+
+  if(!openGroups[g]) continue;
+
+  let wrap=document.createElement("div");
+  wrap.className="grid";
+
+  groups[g].forEach(obj=>{
+   let r=obj.r;
+
+   let hit=r.title.toLowerCase().includes(key);
+   r.ingredients.forEach(gr=>{
+    gr.items.forEach(it=>{
+     if(it.name.toLowerCase().includes(key)) hit=true;
+    });
+   });
+
+   if(!hit) return;
+
+   let div=document.createElement("div");
+   div.className="card";
+   div.innerHTML=`
+    <img src="${r.image||''}" onclick="detailView(${obj.i})">
+    <div>${r.title}</div>
+   `;
+   wrap.appendChild(div);
+  });
+
+  list.appendChild(wrap);
+ }
 }
 
+/* 詳細 */
 function detailView(i){
  let r=recipes[i];
- detail.style.display="block";
- list.style.display="none";
+ detail.classList.remove("hidden");
+ list.classList.add("hidden");
 
- let html=`<h2>${r.title}</h2><img src="${r.image}">`;
+ let html=`<h2>${r.title}</h2>`;
+ if(r.image) html+=`<img src="${r.image}">`;
 
  r.ingredients.forEach(g=>{
   html+=`<h3>${g.name}</h3>`;
@@ -167,13 +202,15 @@ function detailView(i){
   });
  });
 
- html+=`<button onclick="addShopping()">追加</button>`;
+ html+=`<button onclick="addShopping()">買い物リストへ追加</button>`;
+ html+=`<button onclick="editRecipe(${i})">編集</button>`;
+ html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
  html+=`<button onclick="show('list')">戻る</button>`;
 
  detail.innerHTML=html;
 }
 
-/* ===== 分量計算 ===== */
+/* 分量計算 */
 function parseAmount(str){
  let num=parseFloat(str);
  let unit=str.replace(num,"");
@@ -185,26 +222,22 @@ function addShopping(){
   let name=c.dataset.name;
   let amount=c.dataset.amount;
 
-  let found=shopping.find(s=>s.name===name);
-
-  if(found){
-   let a=parseAmount(found.amount);
+  let f=shopping.find(s=>s.name===name);
+  if(f){
+   let a=parseAmount(f.amount);
    let b=parseAmount(amount);
-
-   if(a.unit===b.unit){
-    found.amount=(a.num+b.num)+a.unit;
-   }else{
-    found.amount += " + " + amount;
-   }
+   if(a.unit===b.unit) f.amount=(a.num+b.num)+a.unit;
+   else f.amount+=" + "+amount;
   }else{
    shopping.push({name,amount,checked:false});
   }
  });
 
- renderShopping();
+ localStorage.setItem("shopping",JSON.stringify(shopping));
+ alert("買い物リストへ追加しました");
 }
 
-/* ===== ドラッグ ===== */
+/* タッチドラッグ */
 function renderShopping(){
  shopList.innerHTML="";
 
@@ -212,21 +245,36 @@ function renderShopping(){
 
  shopping.forEach((s,i)=>{
   let li=document.createElement("li");
-  li.draggable=true;
-  li.className=s.checked?"gray drag":"drag";
+  li.className=s.checked?"gray":"";
 
   li.innerHTML=`
   <input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">
   ${s.name} (${s.amount})
   `;
 
-  li.ondragstart=()=>dragIndex=i;
-  li.ondragover=e=>e.preventDefault();
-  li.ondrop=()=>{
-   let temp=shopping[dragIndex];
-   shopping.splice(dragIndex,1);
-   shopping.splice(i,0,temp);
-   renderShopping();
+  li.ontouchstart=e=>{
+   dragIndex=i;
+   li.classList.add("dragging");
+  };
+
+  li.ontouchmove=e=>{
+   e.preventDefault();
+   let touch=e.touches[0];
+   let elem=document.elementFromPoint(touch.clientX,touch.clientY);
+   if(!elem || !elem.closest("li")) return;
+
+   let target=[...shopList.children].indexOf(elem.closest("li"));
+   if(target!==dragIndex){
+    let temp=shopping[dragIndex];
+    shopping.splice(dragIndex,1);
+    shopping.splice(target,0,temp);
+    dragIndex=target;
+    renderShopping();
+   }
+  };
+
+  li.ontouchend=()=>{
+   li.classList.remove("dragging");
   };
 
   shopList.appendChild(li);
@@ -235,15 +283,71 @@ function renderShopping(){
 
 function toggle(i){
  shopping[i].checked=!shopping[i].checked;
+ localStorage.setItem("shopping",JSON.stringify(shopping));
  renderShopping();
 }
 
 function clearShopping(){
  shopping=[];
+ localStorage.setItem("shopping",JSON.stringify(shopping));
  renderShopping();
 }
 
-/* ===== 入力系 ===== */
+/* 登録 */
+function saveRecipe(){
+ let file=imageFile.files[0];
+
+ function finish(img){
+  let ing=[];
+  ingredientsArea.childNodes.forEach(g=>{
+   let name=g.children[0].value;
+   let items=[];
+   g.querySelectorAll(".items div").forEach(d=>{
+    let i=d.querySelectorAll("input");
+    items.push({name:i[0].value,amount:i[1].value});
+   });
+   ing.push({name,items});
+  });
+
+  let steps=[];
+  stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
+   steps.push((i+1)+". "+t.value);
+  });
+
+  recipes.push({group:group.value,title:title.value,image:img,ingredients:ing,steps});
+  localStorage.setItem("recipes",JSON.stringify(recipes));
+
+  localStorage.removeItem("draft");
+  clearForm();
+  show("list");
+  renderList();
+ }
+
+ if(file){
+  let r=new FileReader();
+  r.onload=e=>finish(e.target.result);
+  r.readAsDataURL(file);
+ }else finish(null);
+}
+
+/* 編集削除 */
+function editRecipe(i){
+ let r=recipes[i];
+ show("add");
+ group.value=r.group;
+ title.value=r.title;
+}
+
+function deleteRecipe(i){
+ if(confirm("削除する？")){
+  recipes.splice(i,1);
+  localStorage.setItem("recipes",JSON.stringify(recipes));
+  renderList();
+  show("list");
+ }
+}
+
+/* 入力 */
 function addGroup(){
  let div=document.createElement("div");
  div.innerHTML=`
@@ -269,53 +373,31 @@ function addItem(btn){
 function addStep(){
  let d=document.createElement("div");
  d.innerHTML=`
- <textarea placeholder="工程"></textarea>
+ <textarea></textarea>
  <button onclick="this.parentNode.remove()">削除</button>
  `;
  stepsArea.appendChild(d);
 }
 
-function compress(file,cb){
- let img=new Image();
- let r=new FileReader();
- r.onload=e=>img.src=e.target.result;
+/* 下書き */
+setInterval(()=>{
+ localStorage.setItem("draft",JSON.stringify({
+  group:group.value,
+  title:title.value
+ }));
+},2000);
 
- img.onload=()=>{
-  let c=document.createElement("canvas");
-  let w=300;
-  let h=img.height*(300/img.width);
-  c.width=w; c.height=h;
-  c.getContext("2d").drawImage(img,0,0,w,h);
-  cb(c.toDataURL("image/jpeg",0.7));
- };
-
- r.readAsDataURL(file);
+function loadDraft(){
+ if(!draft) return;
+ group.value=draft.group||"";
+ title.value=draft.title||"";
 }
 
-function saveRecipe(){
- let file=imageFile.files[0];
-
- compress(file,img=>{
-  let ing=[];
-  ingredientsArea.childNodes.forEach(g=>{
-   let name=g.children[0].value;
-   let items=[];
-   g.querySelectorAll(".items div").forEach(d=>{
-    let i=d.querySelectorAll("input");
-    items.push({name:i[0].value,amount:i[1].value});
-   });
-   ing.push({name,items});
-  });
-
-  let steps=[];
-  stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
-   steps.push((i+1)+". "+t.value);
-  });
-
-  recipes.push({group:group.value,title:title.value,image:img,ingredients:ing,steps});
-  show("list");
-  renderList();
- });
+function clearForm(){
+ group.value="";
+ title.value="";
+ ingredientsArea.innerHTML="";
+ stepsArea.innerHTML="";
 }
 
 renderList();
