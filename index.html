@@ -103,10 +103,13 @@ button:not(.tabbar button) {
  padding:10px 12px;
  border:none;
  border-radius:10px;
- background:#007aff;       /* iOSブルー */
- color:#fff;
+ background:#e5f0ff;
+ color:#007aff;
 }
-
+button:not(.tabbar button) + button {
+ margin-top:8px;
+}
+ 
 /* 押した時 */
 button:active {
  opacity:0.7;
