@@ -8,7 +8,7 @@
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
-/* タブ */
+/* ===== 下タブ ===== */
 .tabbar {
  position:fixed;
  bottom:0;
@@ -23,25 +23,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-size:18px;
 }
 
-/* 一覧 */
-.grid {
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:6px;
-}
-.card {
- background:#fff;
- border-radius:8px;
- overflow:hidden;
- font-size:11px;
-}
-.card img {
- width:100%;
- height:80px;
- object-fit:cover;
-}
-
-/* 登録 */
+/* ===== 登録画面 ===== */
 #add input, #add textarea {
  font-size:16px;
  padding:10px;
@@ -50,33 +32,56 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  box-sizing:border-box;
 }
 
+#add button {
+ font-size:18px;
+ padding:10px;
+ margin:6px 0;
+ width:100%;
+}
+
+/* 材料グループ（縦配置） */
+.groupBox {
+ background:#fff;
+ padding:8px;
+ margin:8px 0;
+ border-radius:8px;
+}
+
+.items {
+ margin-top:5px;
+}
+
+/* 材料行 */
 .row {
  display:flex;
  gap:5px;
+ margin-top:5px;
 }
 .row input:nth-child(1){ flex:2; }
 .row input:nth-child(2){ flex:1; }
 
-/* 削除ボタン極小 */
+/* 削除ボタン */
 .delBtn {
  width:24px;
- padding:0;
  font-size:16px;
+ padding:0;
 }
 
-.groupBox, .stepBox {
+/* 工程 */
+.stepBox {
  display:flex;
  align-items:center;
  gap:5px;
-}
-.groupBox input, .stepBox textarea {
- flex:1;
+ margin:5px 0;
 }
 
-/* 工程番号 */
 .stepNumber {
  width:25px;
  text-align:right;
+}
+
+.stepBox textarea {
+ flex:1;
 }
 
 .hidden { display:none; }
@@ -87,6 +92,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 
 <div class="container">
 
+<!-- 登録画面 -->
 <div id="add">
 
 <h3>レシピ登録</h3>
@@ -103,8 +109,18 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 <div id="stepsArea"></div>
 <button onclick="addStep()">工程追加</button>
 
+<button onclick="saveRecipe()">保存</button>
+<button onclick="clearForm()">クリア</button>
+
 </div>
 
+</div>
+
+<!-- 下タブ -->
+<div class="tabbar">
+<button onclick="alert('一覧は別で実装')">一覧</button>
+<button>登録</button>
+<button onclick="alert('買い物は別で実装')">買い物</button>
 </div>
 
 <script>
@@ -117,25 +133,20 @@ function addGroup(){
  div.innerHTML=`
  <input placeholder="グループ名">
  <button class="delBtn" onclick="this.parentNode.remove()">×</button>
+ <div class="items"></div>
+ <button onclick="addItem(this)">材料追加</button>
  `;
-
- let items=document.createElement("div");
- div.appendChild(items);
-
- let addBtn=document.createElement("button");
- addBtn.textContent="＋";
- addBtn.onclick=()=>addItem(items);
-
- div.appendChild(addBtn);
 
  ingredientsArea.appendChild(div);
 
- /* ★追加直後に1行作る（重要：これで入力欄復活） */
- addItem(items);
+ /* 初期1行 */
+ addItem(div.querySelector(".items"));
 }
 
 /* 材料 */
-function addItem(container){
+function addItem(btn){
+ let container = btn.classList.contains("items") ? btn : btn.previousElementSibling;
+
  let row=document.createElement("div");
  row.className="row";
 
@@ -153,33 +164,35 @@ function addStep(){
  let div=document.createElement("div");
  div.className="stepBox";
 
- let num=document.createElement("div");
- num.className="stepNumber";
-
- let textarea=document.createElement("textarea");
-
- let del=document.createElement("button");
- del.className="delBtn";
- del.textContent="×";
- del.onclick=()=>{
-  div.remove();
-  updateStepNumbers();
- };
-
- div.appendChild(num);
- div.appendChild(textarea);
- div.appendChild(del);
+ div.innerHTML=`
+ <div class="stepNumber"></div>
+ <textarea></textarea>
+ <button class="delBtn" onclick="removeStep(this)">×</button>
+ `;
 
  stepsArea.appendChild(div);
-
  updateStepNumbers();
 }
 
-/* 番号振り直し */
+function removeStep(btn){
+ btn.parentNode.remove();
+ updateStepNumbers();
+}
+
 function updateStepNumbers(){
  document.querySelectorAll(".stepBox").forEach((s,i)=>{
   s.querySelector(".stepNumber").textContent=(i+1)+".";
  });
+}
+
+/* ダミー */
+function saveRecipe(){ alert("保存（ここは既存コードに戻せる）"); }
+function clearForm(){
+ title.value="";
+ group.value="";
+ imageFile.value="";
+ ingredientsArea.innerHTML="";
+ stepsArea.innerHTML="";
 }
 
 </script>
