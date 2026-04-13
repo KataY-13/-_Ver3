@@ -8,7 +8,7 @@
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
-/* 下タブ（大きめ） */
+/* 下タブ */
 .tabbar {
  position:fixed;
  bottom:0;
@@ -23,7 +23,7 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-size:18px;
 }
 
-/* 一覧グリッド */
+/* 一覧 */
 .grid {
  display:grid;
  grid-template-columns:repeat(3,1fr);
@@ -37,11 +37,19 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-size:11px;
 }
 
-/* 一覧画像（変更なし） */
 .card img {
  width:100%;
  height:80px;
  object-fit:cover;
+}
+
+/* 詳細画像 */
+.detail-img {
+ width:60%;
+ max-width:250px;
+ display:block;
+ margin:10px auto;
+ border-radius:10px;
 }
 
 /* グループ */
@@ -52,25 +60,44 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  font-weight:bold;
 }
 
-/* 詳細画像だけ小さく */
-.detail-img {
- width:60%;
- max-width:250px;
- display:block;
- margin:10px auto;
- border-radius:10px;
+/* ===== 登録画面UI強化 ===== */
+#add input,
+#add textarea,
+#add button {
+ font-size:18px;
+ padding:14px;
+ margin:8px 0;
+ width:100%;
+ box-sizing:border-box;
+ border-radius:8px;
 }
 
-.gray { color:#aaa; text-decoration:line-through; }
-.hidden { display:none; }
+/* ファイル選択 */
+#add input[type="file"] {
+ font-size:16px;
+ padding:12px;
+}
 
+/* ボタン見た目 */
+#add button {
+ background:#fff;
+ border:1px solid #ccc;
+}
+
+/* 買い物 */
 li {
  list-style:none;
  background:#fff;
  margin:6px 0;
  padding:10px;
  border-radius:8px;
+ display:flex;
+ align-items:center;
+ gap:10px;
 }
+
+.gray { color:#aaa; text-decoration:line-through; }
+.hidden { display:none; }
 </style>
 </head>
 
@@ -141,12 +168,12 @@ function renderList(){
  let groups={};
 
  recipes.forEach((r,i)=>{
-  let g = r.group && r.group.trim() ? r.group : "未分類";
+  let g = (r.group && r.group.trim()) ? r.group.trim() : "未分類";
   if(!groups[g]) groups[g]=[];
   groups[g].push({r,i});
  });
 
- for(let g in groups){
+ Object.keys(groups).forEach(g=>{
   let title=document.createElement("div");
   title.className="groupTitle";
   title.textContent=g;
@@ -156,7 +183,7 @@ function renderList(){
   };
   list.appendChild(title);
 
-  if(!openGroups[g]) continue;
+  if(!openGroups[g]) return;
 
   let wrap=document.createElement("div");
   wrap.className="grid";
@@ -183,10 +210,10 @@ function renderList(){
   });
 
   list.appendChild(wrap);
- }
+ });
 }
 
-/* 詳細（ここが変更ポイント） */
+/* 詳細 */
 function detailView(i){
  let r=recipes[i];
  detail.classList.remove("hidden");
@@ -207,32 +234,62 @@ function detailView(i){
  });
 
  html+=`<button onclick="addShopping()">買い物リストへ追加</button>`;
- html+=`<button onclick="editRecipe(${i})">編集</button>`;
- html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
  html+=`<button onclick="show('list')">戻る</button>`;
 
  detail.innerHTML=html;
 }
 
+/* 分量計算 */
+function parseAmount(str){
+ let num=parseFloat(str);
+ let unit=str.replace(num,"");
+ return {num,unit};
+}
+
 /* 買い物 */
 function addShopping(){
  document.querySelectorAll("#detail input:checked").forEach(c=>{
-  shopping.push({
-    name:c.dataset.name,
-    amount:c.dataset.amount
-  });
+  let name=c.dataset.name;
+  let amount=c.dataset.amount;
+
+  let f=shopping.find(s=>s.name===name);
+  if(f){
+   let a=parseAmount(f.amount);
+   let b=parseAmount(amount);
+   if(a.unit===b.unit){
+    f.amount=(a.num+b.num)+a.unit;
+   }else{
+    f.amount+=" + "+amount;
+   }
+  }else{
+   shopping.push({name,amount,checked:false});
+  }
  });
+
  localStorage.setItem("shopping",JSON.stringify(shopping));
  alert("買い物リストへ追加しました");
 }
 
 function renderShopping(){
  shopList.innerHTML="";
- shopping.forEach(s=>{
+ shopping.sort((a,b)=>a.checked-b.checked);
+
+ shopping.forEach((s,i)=>{
   let li=document.createElement("li");
-  li.textContent=s.name+" ("+s.amount+")";
+  li.className=s.checked?"gray":"";
+
+  li.innerHTML=`
+   <input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">
+   ${s.name} (${s.amount})
+  `;
   shopList.appendChild(li);
  });
+}
+
+function toggle(i){
+ shopping[i].checked=!shopping[i].checked;
+ localStorage.setItem("shopping",JSON.stringify(shopping));
+ renderShopping();
 }
 
 function clearShopping(){
@@ -279,23 +336,6 @@ function saveRecipe(){
  }
 }
 
-/* 編集削除 */
-function editRecipe(i){
- let r=recipes[i];
- show("add");
- group.value=r.group;
- title.value=r.title;
-}
-
-function deleteRecipe(i){
- if(confirm("削除する？")){
-  recipes.splice(i,1);
-  localStorage.setItem("recipes",JSON.stringify(recipes));
-  renderList();
-  show("list");
- }
-}
-
 /* 入力 */
 function addGroup(){
  let div=document.createElement("div");
@@ -328,7 +368,7 @@ function addStep(){
  stepsArea.appendChild(d);
 }
 
-/* クリア（画像も） */
+/* クリア */
 function clearForm(){
  group.value="";
  title.value="";
