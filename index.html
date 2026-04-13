@@ -1,3 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>レシピアプリ</title>
+
+<style>
+body { margin:0; font-family:sans-serif; background:#f5f5f5; }
+.container { padding:10px 10px 110px; }
+
+/* タブ */
+.tabbar {
+ position:fixed;
+ bottom:0;
+ width:100%;
+ display:flex;
+ background:#fff;
+ border-top:1px solid #ccc;
+}
+.tabbar button {
+ flex:1;
+ padding:25px;
+ font-size:18px;
+}
+
+/* 一覧 */
+.grid {
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:6px;
+}
+.card {
+ background:#fff;
+ border-radius:8px;
+ overflow:hidden;
+ font-size:11px;
+}
+.card img {
+ width:100%;
+ height:80px;
+ object-fit:cover;
+}
+
+.groupTitle {
+ background:#ddd;
+ padding:10px;
+ margin-top:10px;
+ font-weight:bold;
+}
+
+/* 登録 */
 /* ===== 入力欄：iPhone最適 ===== */
 #add input, #add textarea {
  font-size:16px;          /* ズーム防止 */
@@ -28,3 +79,295 @@
  min-height:44px;
  font-size:18px;
 }
+
+/* その他 */
+.groupBox { background:#fff; padding:8px; margin:8px 0; border-radius:8px; }
+.items { margin-top:5px; }
+
+.row { display:flex; gap:5px; margin-top:5px; }
+
+.stepBox { display:flex; gap:5px; align-items:center; margin:5px 0; }
+.stepNumber { width:25px; text-align:right; }
+
+li {
+ list-style:none;
+ background:#fff;
+ margin:6px 0;
+ padding:10px;
+ border-radius:8px;
+ display:flex;
+ align-items:center;
+ gap:10px;
+}
+
+.gray { color:#aaa; text-decoration:line-through; }
+.hidden { display:none; }
+.topbar { display:flex; justify-content:space-between; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<input id="search" placeholder="検索" oninput="renderList()">
+
+<div id="list"></div>
+<div id="detail" class="hidden"></div>
+
+<div id="add" class="hidden">
+<h3>レシピ登録</h3>
+
+<input id="title" placeholder="タイトル">
+<input type="file" id="imageFile">
+<input id="group" placeholder="主菜など">
+
+<h4>材料</h4>
+<div id="ingredientsArea"></div>
+<button onclick="addGroup()">材料グループ追加</button>
+
+<h4>作り方</h4>
+<div id="stepsArea"></div>
+<button onclick="addStep()">工程追加</button>
+
+<button onclick="saveRecipe()">保存</button>
+<button onclick="clearForm()">クリア</button>
+</div>
+
+<div id="shopping" class="hidden">
+<div class="topbar">
+<h3>買い物リスト</h3>
+<button onclick="clearShopping()">クリア</button>
+</div>
+<ul id="shopList"></ul>
+</div>
+
+</div>
+
+<div class="tabbar">
+<button onclick="show('list')">一覧</button>
+<button onclick="show('add')">登録</button>
+<button onclick="show('shopping')">買い物</button>
+</div>
+
+<script>
+
+/* ===== データ保存 ===== */
+let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
+let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
+
+let editIndex = null;
+let openGroups={};
+
+/* 画面 */
+function show(p){
+ list.classList.add("hidden");
+ detail.classList.add("hidden");
+ add.classList.add("hidden");
+ shoppingDiv=document.getElementById("shopping");
+ shoppingDiv.classList.add("hidden");
+
+ search.style.display = (p==="list")?"block":"none";
+
+ if(p==="list") list.classList.remove("hidden");
+ if(p==="add") add.classList.remove("hidden");
+ if(p==="shopping"){ shoppingDiv.classList.remove("hidden"); renderShopping(); }
+}
+
+/* 一覧 */
+function renderList(){
+ list.innerHTML="";
+ let key=search.value.toLowerCase();
+ let groups={};
+
+ recipes.forEach((r,i)=>{
+  let g=r.group?.trim() || "未分類";
+  if(!groups[g]) groups[g]=[];
+  groups[g].push({r,i});
+ });
+
+ Object.keys(groups).forEach(g=>{
+  let title=document.createElement("div");
+  title.className="groupTitle";
+  title.textContent=g;
+  title.onclick=()=>{ openGroups[g]=!openGroups[g]; renderList(); };
+  list.appendChild(title);
+
+  if(!openGroups[g]) return;
+
+  let wrap=document.createElement("div");
+  wrap.className="grid";
+
+  groups[g].forEach(obj=>{
+   let r=obj.r;
+
+   let hit=r.title.toLowerCase().includes(key);
+   r.ingredients.forEach(gr=>{
+    gr.items.forEach(it=>{
+     if(it.name.toLowerCase().includes(key)) hit=true;
+    });
+   });
+   if(!hit) return;
+
+   let div=document.createElement("div");
+   div.className="card";
+   div.innerHTML=`<img src="${r.image||''}"><div>${r.title}</div>`;
+   div.onclick=()=>detailView(obj.i);
+   wrap.appendChild(div);
+  });
+
+  list.appendChild(wrap);
+ });
+}
+
+/* 詳細 */
+function detailView(i){
+ let r=recipes[i];
+ detail.classList.remove("hidden");
+ list.classList.add("hidden");
+
+ let html=`<h2>${r.title}</h2>`;
+
+ r.ingredients.forEach(g=>{
+  html+=`<h3>${g.name}</h3>`;
+  g.items.forEach(it=>{
+   html+=`<label><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">
+   ${it.name} (${it.amount})</label><br>`;
+  });
+ });
+
+ html+=`<h3>作り方</h3>`;
+ r.steps.forEach(s=> html+=s+"<br>");
+
+ html+=`<button onclick="editRecipe(${i})">編集</button>`;
+ html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
+
+ detail.innerHTML=html;
+}
+
+/* ===== 保存（上書き対応） ===== */
+function saveRecipe(){
+ let ing=[];
+ ingredientsArea.querySelectorAll(".groupBox").forEach(g=>{
+  let items=[];
+  g.querySelectorAll(".row").forEach(d=>{
+   let i=d.querySelectorAll("input");
+   items.push({name:i[0].value,amount:i[1].value});
+  });
+  ing.push({name:g.querySelector("input").value,items});
+ });
+
+ let steps=[];
+ stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
+  steps.push((i+1)+". "+t.value);
+ });
+
+ let data={
+  group:group.value,
+  title:title.value,
+  image:null,
+  ingredients:ing,
+  steps
+ };
+
+ if(editIndex!==null){
+  recipes[editIndex]=data; // 上書き
+  editIndex=null;
+ }else{
+  recipes.push(data);
+ }
+
+ localStorage.setItem("recipes",JSON.stringify(recipes));
+
+ clearForm();
+ show("list");
+ renderList();
+}
+
+/* 編集 */
+function editRecipe(i){
+ let r=recipes[i];
+ editIndex=i;
+ show("add");
+
+ title.value=r.title;
+ group.value=r.group;
+
+ ingredientsArea.innerHTML="";
+ r.ingredients.forEach(g=>{
+  let div=document.createElement("div");
+  div.className="groupBox";
+  div.innerHTML=`<input value="${g.name}"><div class="items"></div>`;
+  ingredientsArea.appendChild(div);
+
+  g.items.forEach(it=>{
+   addItem(div.querySelector(".items"),it.name,it.amount);
+  });
+ });
+
+ stepsArea.innerHTML="";
+ r.steps.forEach(s=>{
+  addStep(s.replace(/^\d+\.\s*/,""));
+ });
+}
+
+/* 削除 */
+function deleteRecipe(i){
+ if(confirm("削除する？")){
+  recipes.splice(i,1);
+  localStorage.setItem("recipes",JSON.stringify(recipes));
+  renderList();
+ }
+}
+
+/* UI生成 */
+function addGroup(){
+ let div=document.createElement("div");
+ div.className="groupBox";
+ div.innerHTML=`<input placeholder="グループ名"><div class="items"></div>`;
+ ingredientsArea.appendChild(div);
+ addItem(div.querySelector(".items"));
+}
+
+function addItem(container,name="",amount=""){
+ let row=document.createElement("div");
+ row.className="row";
+ row.innerHTML=`
+ <input value="${name}">
+ <input value="${amount}">
+ <button class="delBtn" onclick="this.parentNode.remove()">×</button>
+ `;
+ container.appendChild(row);
+}
+
+function addStep(val=""){
+ let div=document.createElement("div");
+ div.className="stepBox";
+ div.innerHTML=`
+ <div class="stepNumber"></div>
+ <textarea>${val}</textarea>
+ <button class="delBtn" onclick="this.parentNode.remove();updateStepNumbers()">×</button>
+ `;
+ stepsArea.appendChild(div);
+ updateStepNumbers();
+}
+
+function updateStepNumbers(){
+ document.querySelectorAll(".stepBox").forEach((s,i)=>{
+  s.querySelector(".stepNumber").textContent=(i+1)+".";
+ });
+}
+
+function clearForm(){
+ title.value="";
+ group.value="";
+ ingredientsArea.innerHTML="";
+ stepsArea.innerHTML="";
+ editIndex=null;
+}
+
+renderList();
+</script>
+
+</body>
+</html>
