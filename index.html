@@ -157,6 +157,21 @@ input, textarea {
  opacity:1;
  bottom:100px;
 }
+ .linkBtn {
+ display:block;
+ text-align:center;
+ margin:10px 0;
+ padding:12px;
+ border-radius:10px;
+ background:#e5f0ff;
+ color:#007aff;
+ text-decoration:none;
+ font-size:16px;
+}
+
+.linkBtn:active {
+ background:#d0e2ff;
+}
 </style>
 </head>
 
@@ -286,9 +301,9 @@ function detailView(i){
  detail.classList.remove("hidden");
  list.classList.add("hidden");
 
- let html=`<h2>${r.title}</h2>`;
  if(r.sourceUrl){
- html += `<a href="${r.sourceUrl}" target="_blank" style="display:block;margin:10px 0;color:#007aff;">
+ html += `
+ <a href="${r.sourceUrl}" target="_blank" class="linkBtn">
   レシピ元を見る
  </a>`;
 }
