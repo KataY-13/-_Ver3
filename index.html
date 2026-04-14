@@ -434,6 +434,7 @@ let data={
   clearForm();
   show("list");
   renderList();
+  showToast("保存しました");
  }
 
  if(file){
@@ -510,6 +511,7 @@ function updateStepNumbers(){
 }
 
 function clearForm(){
+ sourceUrl.value="";
  title.value="";
  group.value="";
  imageFile.value="";
@@ -529,6 +531,7 @@ renderList();
  },1500);
 }
 </script>
-<div id="toast"></div>
+<div id="toast">
+</div>
 </body>
 </html>
