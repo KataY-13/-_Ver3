@@ -295,7 +295,11 @@ function renderList(){
 
    let div=document.createElement("div");
    div.className="card";
-   div.innerHTML=`<img src="${r.image||''}"><div>${r.title}</div>`;
+   div.innerHTML=`
+ <img src="${r.image||''}">
+ <div>${r.title}</div>
+ <button onclick="deleteRecipe(${obj.i}); event.stopPropagation();">削除</button>
+`;
    div.onclick=()=>detailView(obj.i);
    wrap.appendChild(div);
   });
