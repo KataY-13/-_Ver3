@@ -230,6 +230,7 @@ let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
 
 let editIndex=null;
+let currentImage = null;
 let openGroups={};
 
 /* 画面 */
@@ -431,7 +432,7 @@ function saveRecipe(){
   let data={
    group: groupInput.value.trim() || "未分類", // ← ここが本質
    title: document.getElementById("title").value,
-   image: img,
+   image: img || currentImage,
    sourceUrl: document.getElementById("sourceUrl").value,
    ingredients: ing,
    steps
@@ -463,12 +464,45 @@ function saveRecipe(){
 function editRecipe(i){
  let r=recipes[i];
  editIndex=i;
+ currentImage = r.image;
+
  show("add");
+
  title.value=r.title;
  group.value=r.group;
  sourceUrl.value = r.sourceUrl || "";
-}
 
+ // 材料
+ ingredientsArea.innerHTML="";
+ r.ingredients.forEach(g=>{
+  addGroup();
+  let gBox = ingredientsArea.lastChild;
+
+  gBox.querySelector("input").value = g.name;
+
+  let itemsDiv = gBox.querySelector(".items");
+  itemsDiv.innerHTML="";
+
+  g.items.forEach(it=>{
+   addItem(itemsDiv);
+   let row = itemsDiv.lastChild;
+   let inputs = row.querySelectorAll("input");
+   inputs[0].value = it.name;
+   inputs[1].value = it.amount;
+  });
+ });
+
+ // 工程
+ stepsArea.innerHTML="";
+ r.steps.forEach(s=>{
+  addStep();
+  let t = stepsArea.lastChild.querySelector("textarea");
+  t.value = s.replace(/^\d+\.\s*/, "");
+ });
+
+ updateStepNumbers();
+}
+ 
 /* 削除 */
 function deleteRecipe(i){
  if(!confirm("このレシピを削除しますか？")) return;
@@ -533,6 +567,7 @@ function clearForm(){
  ingredientsArea.innerHTML="";
  stepsArea.innerHTML="";
  editIndex=null;
+ currentImage=null;
 }
 
 renderList();
