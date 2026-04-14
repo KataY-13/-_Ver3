@@ -296,9 +296,11 @@ function renderList(){
    let div=document.createElement("div");
    div.className="card";
    div.innerHTML=`
- <img src="${r.image||''}">
- <div>${r.title}</div>
- <button onclick="deleteRecipe(${obj.i}); event.stopPropagation();">削除</button>
+ <div class="cardInner">
+  <button class="closeBtn" onclick="deleteRecipe(${obj.i}); event.stopPropagation();">×</button>
+  <img src="${r.image||''}">
+  <div>${r.title}</div>
+ </div>
 `;
    div.onclick=()=>detailView(obj.i);
    wrap.appendChild(div);
