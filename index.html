@@ -255,7 +255,7 @@ function renderList(){
 
  // ★ グループ分け（未分類も普通に1グループ）
  recipes.forEach((r,i)=>{
-  let g = r.group; // ← ここ重要（|| 未分類は不要）
+  let g = r.group || "未分類";
   if(!groups[g]) groups[g]=[];
   groups[g].push({r,i});
  });
