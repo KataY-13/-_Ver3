@@ -399,9 +399,13 @@ function clearShopping(){
 
 /* 登録（画像修正） */
 function saveRecipe(){
+
+ let groupInput = document.getElementById("group"); // ← 追加（重要）
+
  let file=imageFile.files[0];
 
  function finish(img){
+
   let ing=[];
   ingredientsArea.querySelectorAll(".groupBox").forEach(g=>{
    let items=[];
@@ -416,18 +420,22 @@ function saveRecipe(){
   stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
    steps.push((i+1)+". "+t.value);
   });
-  
-let data={
- group: group.value.trim() || "未分類",
- title:title.value,
- image:img,
- sourceUrl: sourceUrl.value, // ← 追加
- ingredients:ing,
- steps
-};
 
-  if(editIndex!==null){ recipes[editIndex]=data; editIndex=null; }
-  else recipes.push(data);
+  let data={
+   group: groupInput.value.trim() || "未分類", // ← ここが本質
+   title: document.getElementById("title").value,
+   image: img,
+   sourceUrl: document.getElementById("sourceUrl").value,
+   ingredients: ing,
+   steps
+  };
+
+  if(editIndex!==null){
+   recipes[editIndex]=data;
+   editIndex=null;
+  } else {
+   recipes.push(data);
+  }
 
   localStorage.setItem("recipes",JSON.stringify(recipes));
 
