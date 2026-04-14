@@ -171,7 +171,8 @@ input, textarea {
 
 <div id="add" class="hidden">
 <h3>レシピ登録</h3>
-
+ 
+<input id="sourceUrl" placeholder="ソース元URL">
 <input id="title" placeholder="タイトル">
 <input type="file" id="imageFile">
 <input id="group" placeholder="主菜など">
@@ -286,6 +287,11 @@ function detailView(i){
  list.classList.add("hidden");
 
  let html=`<h2>${r.title}</h2>`;
+ if(r.sourceUrl){
+ html += `<a href="${r.sourceUrl}" target="_blank" style="display:block;margin:10px 0;color:#007aff;">
+  レシピ元を見る
+ </a>`;
+}
  if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
 
  r.ingredients.forEach(g=>{
@@ -385,8 +391,15 @@ function saveRecipe(){
   stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
    steps.push((i+1)+". "+t.value);
   });
-
-  let data={group:group.value,title:title.value,image:img,ingredients:ing,steps};
+  
+let data={
+ group: group.value.trim() || "未分類",
+ title:title.value,
+ image:img,
+ sourceUrl: sourceUrl.value, // ← 追加
+ ingredients:ing,
+ steps
+};
 
   if(editIndex!==null){ recipes[editIndex]=data; editIndex=null; }
   else recipes.push(data);
@@ -412,6 +425,7 @@ function editRecipe(i){
  show("add");
  title.value=r.title;
  group.value=r.group;
+ sourceUrl.value = r.sourceUrl || "";
 }
 
 /* 削除 */
