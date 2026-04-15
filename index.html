@@ -432,7 +432,7 @@ function saveRecipe(){
   let data={
    group: groupInput.value.trim() || "未分類", // ← ここが本質
    title: document.getElementById("title").value,
-   image: img || currentImage,
+   image: (file ? img : currentImage),
    sourceUrl: document.getElementById("sourceUrl").value,
    ingredients: ing,
    steps
