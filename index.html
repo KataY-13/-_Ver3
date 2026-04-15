@@ -275,11 +275,39 @@ function renderList(){
   };
   list.appendChild(title);
 
-  // ★ 閉じてたら中身出さない
-  if(!openGroups[g]) return;
+  // ★ 削除したのでここはそのまま続く
+
+if(openGroups[g]){   // ← これを追加
 
   let wrap=document.createElement("div");
   wrap.className="grid";
+
+  groups[g].forEach(obj=>{
+    let r=obj.r;
+
+    let hit=r.title.toLowerCase().includes(key);
+
+    r.ingredients.forEach(gr=>{
+      gr.items.forEach(it=>{
+        if(it.name.toLowerCase().includes(key)) hit=true;
+      });
+    });
+
+    if(!hit) return;
+
+    let div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      <img src="${r.image||''}">
+      <div>${r.title}</div>
+    `;
+    div.onclick=()=>detailView(obj.i);
+    wrap.appendChild(div);
+  });
+
+  list.appendChild(wrap);
+
+} 
 
    groups[g].forEach(obj=>{
    let r=obj.r;
