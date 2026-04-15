@@ -254,18 +254,21 @@ function renderList(){
  let key=search.value.toLowerCase();
  let groups={};
 
- // ★ グループ分け（未分類も普通に1グループ）
+ // グループ分け
  recipes.forEach((r,i)=>{
-  let g = r.group || "未分類";
+  let g = (r.group || "").trim() || "未分類";
   if(!groups[g]) groups[g]=[];
   groups[g].push({r,i});
  });
 
  Object.keys(groups).sort().forEach(g=>{
 
-  // ★ 初期は閉じる（何も設定しない）
   if(openGroups[g] === undefined) openGroups[g] = false;
 
+  // ★ グループの箱を作る（これが重要）
+  let box = document.createElement("div");
+
+  // タイトル
   let title=document.createElement("div");
   title.className="groupTitle";
   title.textContent=g;
@@ -273,70 +276,43 @@ function renderList(){
    openGroups[g]=!openGroups[g];
    renderList();
   };
-  list.appendChild(title);
 
-  // ★ 削除したのでここはそのまま続く
+  box.appendChild(title);
 
-if(openGroups[g]){   // ← これを追加
+  // 中身（開いてる時だけ）
+  if(openGroups[g]){
+    let wrap=document.createElement("div");
+    wrap.className="grid";
 
-  let wrap=document.createElement("div");
-  wrap.className="grid";
+    groups[g].forEach(obj=>{
+      let r=obj.r;
 
-  groups[g].forEach(obj=>{
-    let r=obj.r;
+      let hit=r.title.toLowerCase().includes(key);
 
-    let hit=r.title.toLowerCase().includes(key);
-
-    r.ingredients.forEach(gr=>{
-      gr.items.forEach(it=>{
-        if(it.name.toLowerCase().includes(key)) hit=true;
+      r.ingredients.forEach(gr=>{
+        gr.items.forEach(it=>{
+          if(it.name.toLowerCase().includes(key)) hit=true;
+        });
       });
+
+      if(!hit) return;
+
+      let div=document.createElement("div");
+      div.className="card";
+      div.innerHTML=`
+        <img src="${r.image||''}">
+        <div>${r.title}</div>
+      `;
+      div.onclick=()=>detailView(obj.i);
+
+      wrap.appendChild(div);
     });
 
-    if(!hit) return;
+    box.appendChild(wrap);
+  }
 
-    let div=document.createElement("div");
-    div.className="card";
-    div.innerHTML=`
-      <img src="${r.image||''}">
-      <div>${r.title}</div>
-    `;
-    div.onclick=()=>detailView(obj.i);
-    wrap.appendChild(div);
-  });
-
-  list.appendChild(wrap);
-
-} 
-
-   groups[g].forEach(obj=>{
-   let r=obj.r;
-
-   let hit=r.title.toLowerCase().includes(key);
-
-   r.ingredients.forEach(gr=>{
-    gr.items.forEach(it=>{
-     if(it.name.toLowerCase().includes(key)) hit=true;
-    });
-   });
-
-   if(!hit) return;
-
-   
-   let div=document.createElement("div");
-   div.className="card";
-   div.innerHTML=`
- <div class="cardInner">
-  <button class="closeBtn" onclick="deleteRecipe(${obj.i}); event.stopPropagation();">×</button>
-  <img src="${r.image||''}">
-  <div>${r.title}</div>
- </div>
-`;
-   div.onclick=()=>detailView(obj.i);
-   wrap.appendChild(div);
-  });
-
-  list.appendChild(wrap);
+  // ★ 最後にまとめて追加
+  list.appendChild(box);
  });
 }
 
