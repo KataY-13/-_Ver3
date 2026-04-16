@@ -189,7 +189,13 @@ input, textarea {
 
 <div class="topbar">
   <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
+  
   <button onclick="exportData()">バックアップ</button>
+
+  <label style="padding:10px 12px; background:#e5f0ff; border-radius:10px; color:#007aff;">
+    復元
+    <input type="file" onchange="importData(this.files[0])" style="display:none;">
+  </label>
 </div>
 
 <div id="list"></div>
