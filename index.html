@@ -336,7 +336,13 @@ function renderList(){
 /* 詳細（ボタン復活） */
 function detailView(i){
  let r=recipes[i];
- let html = "";
+ let html = `
+<div class="topbar">
+  <div style="flex:1; text-align:center; font-weight:bold;">
+    ${r.title}
+  </div>
+</div>
+`;
  detail.classList.remove("hidden");
  list.classList.add("hidden");
 
