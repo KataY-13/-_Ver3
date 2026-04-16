@@ -192,7 +192,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.00
+ v1.01
 </div>
 </div>
 <div class="topbar" id="listBar">
@@ -447,7 +447,7 @@ function saveRecipe(){
 
  let groupInput = document.getElementById("group"); // ← 追加（重要）
 
- let file=imageFile.files[0];
+ let file = document.getElementById("imageFile").files[0];
 
  function finish(img){
 
@@ -469,7 +469,7 @@ function saveRecipe(){
  let data={
  group: groupInput.value.trim() || "未分類",
  title: document.getElementById("title").value,
- image: img || currentImage,
+ imagimage: (img !== null && img !== undefined) ? img : currentImage,
  sourceUrl: document.getElementById("sourceUrl").value,
  ingredients: ing,
  steps
