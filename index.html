@@ -187,7 +187,7 @@ input, textarea {
 
 <div class="container">
 
-<div class="topbar">
+<div class="topbar" id="listBar">
   <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
   
   <button onclick="exportData()">バックアップ</button>
@@ -258,6 +258,7 @@ function show(p){
  shoppingDiv=document.getElementById("shopping");
  shoppingDiv.classList.add("hidden");
 
+ document.getElementById("listBar").style.display = (p==="list") ? "flex" : "none";
  search.style.display = (p==="list")?"block":"none";
 
  if(p==="list") list.classList.remove("hidden");
