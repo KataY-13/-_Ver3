@@ -458,14 +458,14 @@ function saveRecipe(){
    steps.push((i+1)+". "+t.value);
   });
 
-  let data={
-   group: groupInput.value.trim() || "未分類", // ← ここが本質
-   title: document.getElementById("title").value,
-   image: file ? img : currentImage,//image: file ? img : (editIndex !== null ? currentImage : null),
-   sourceUrl: document.getElementById("sourceUrl").value,
-   ingredients: ing,
-   steps
-  };
+ let data={
+ group: groupInput.value.trim() || "未分類",
+ title: document.getElementById("title").value,
+ image: img || currentImage,
+ sourceUrl: document.getElementById("sourceUrl").value,
+ ingredients: ing,
+ steps
+};
 
   if(editIndex!==null){
    recipes[editIndex]=data;
@@ -483,10 +483,20 @@ function saveRecipe(){
  }
 
  if(file){
-  let r=new FileReader();
-  r.onload=e=>finish(e.target.result);
-  r.readAsDataURL(file);
- }else finish(null);
+ let reader = new FileReader();
+
+ reader.onload = function(e){
+  finish(e.target.result);
+ };
+
+ reader.onerror = function(){
+  alert("画像の読み込みに失敗しました");
+ };
+
+ reader.readAsDataURL(file);
+
+}else{
+ finish(currentImage);
 }
 
 /* 編集 */
