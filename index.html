@@ -269,7 +269,7 @@ function show(p){
 /* 一覧（グループ並列修正） */
 function renderList(){
  list.innerHTML="";
- let key=search.value.toLowerCase();
+ let key = toKatakana(search.value.toLowerCase());
  let groups={};
 
  // グループ分け
@@ -305,11 +305,11 @@ function renderList(){
     groups[g].forEach(obj=>{
       let r=obj.r;
 
-      let hit=r.title.toLowerCase().includes(key);
+      let hit = toKatakana(r.title.toLowerCase()).includes(key);
 
       r.ingredients.forEach(gr=>{
         gr.items.forEach(it=>{
-          if(it.name.toLowerCase().includes(key)) hit=true;
+          if(toKatakana(it.name.toLowerCase()).includes(key)) hit=true;
         });
       });
 
@@ -629,6 +629,12 @@ function importData(file){
   showToast("復元しました");
  };
  reader.readAsText(file);
+}
+ /* ひらがな→カタカナ */
+function toKatakana(str){
+ return str.replace(/[\u3041-\u3096]/g, ch =>
+  String.fromCharCode(ch.charCodeAt(0) + 0x60)
+ );
 }
 </script>
 <div id="toast">
