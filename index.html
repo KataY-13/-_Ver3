@@ -215,7 +215,13 @@ input, textarea {
 <div id="detail" class="hidden"></div>
 
 <div id="add" class="hidden">
-<h3>レシピ登録</h3>
+<div class="topbar">
+  <h3 style="margin:0;">レシピ登録</h3>
+  <div style="display:flex; gap:6px;">
+    <button onclick="saveRecipe()">保存</button>
+    <button onclick="clearForm()">クリア</button>
+  </div>
+</div>
  
 <input id="sourceUrl" placeholder="ソース元URL">
 <input id="title" placeholder="タイトル">
@@ -230,8 +236,6 @@ input, textarea {
 <div id="stepsArea"></div>
 <button onclick="addStep()">工程追加</button>
 
-<button onclick="saveRecipe()">保存</button>
-<button onclick="clearForm()">クリア</button>
 </div>
 
 <div id="shopping" class="hidden">
