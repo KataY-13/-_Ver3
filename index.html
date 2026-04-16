@@ -192,7 +192,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.03
+ v1.04
 
  
 
@@ -471,10 +471,10 @@ function saveRecipe(){
    steps.push((i+1)+". "+t.value);
   });
 
- let data={
+let data={
  group: groupInput.value.trim() || "未分類",
  title: document.getElementById("title").value,
- imagimage: (img !== null && img !== undefined) ? img : currentImage,
+ image: (img !== null && img !== undefined) ? img : currentImage,
  sourceUrl: document.getElementById("sourceUrl").value,
  ingredients: ing,
  steps
