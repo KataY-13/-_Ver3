@@ -83,6 +83,11 @@ li {
 .hidden { display:none; }
 
 .topbar { display:flex; justify-content:space-between; }
+.topbar {
+ display:flex;
+ gap:8px;
+ margin-bottom:8px;
+}
 /* ===== 全体をアプリ風 ===== */
 body {
  background:#f2f2f7; /* iOSっぽい背景 */
@@ -182,7 +187,10 @@ input, textarea {
 
 <div class="container">
 
-<input id="search" placeholder="検索" oninput="renderList()">
+<div class="topbar">
+  <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
+  <button onclick="exportData()">バックアップ</button>
+</div>
 
 <div id="list"></div>
 <div id="detail" class="hidden"></div>
@@ -585,6 +593,29 @@ renderList();
  setTimeout(()=>{
   t.classList.remove("show");
  },1500);
+}
+ /* ===== バックアップ ===== */
+function exportData(){
+ let data = localStorage.getItem("recipes") || "[]";
+ let blob = new Blob([data], {type:"application/json"});
+ let a = document.createElement("a");
+ a.href = URL.createObjectURL(blob);
+ a.download = "recipes_backup.json";
+ a.click();
+}
+
+/* ===== 復元 ===== */
+function importData(file){
+ if(!file) return;
+
+ let reader = new FileReader();
+ reader.onload = e => {
+  localStorage.setItem("recipes", e.target.result);
+  recipes = JSON.parse(e.target.result);
+  renderList();
+  showToast("復元しました");
+ };
+ reader.readAsText(file);
 }
 </script>
 <div id="toast">
