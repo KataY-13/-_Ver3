@@ -9,13 +9,15 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
 .tabbar {
- position:fixed;
- bottom:0;
- width:100%;
- display:flex;
- background:#fff;
- border-top:1px solid #ccc;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  background: #fff;
+  border-top: 1px solid #ccc;
+  z-index: 100; /* ★ここを追加（一番手前にする） */
 }
+ 
 .tabbar button {
  flex:1;
  padding:25px;
@@ -184,26 +186,32 @@ input, textarea {
 .card { position: relative; }
 
 /* 星マークのスタイル */
+/* 星マークの最終版スタイル */
 .fav-star {
   position: absolute;
   top: 4px;
   right: 4px;
   font-size: 26px;
   cursor: pointer;
-  z-index: 10;
-  /* 未チェック：黒色 */
-  color: #000;
-  -webkit-text-stroke: 0px transparent;
+  z-index: 10; /* タブバー(z-index:100)より後ろにする */
+  color: #000; /* 未チェック時は黒 */
+  transition: transform 0.1s; /* 押した時の軽い動き用 */
 }
 
+/* チェックが入った時（activeクラスがついた時） */
 .fav-star.active {
-  /* チェックあり：黄色で黒の縁取り */
-  color: #ffcc00;
+  color: #ffcc00; /* 中身は黄色 */
+  /* text-shadowで上下左右に黒い影を置いて「縁取り」を作る */
   text-shadow: 
     -1px -1px 0 #000,  
      1px -1px 0 #000,
     -1px  1px 0 #000,
      1px  1px 0 #000;
+}
+
+/* 押した時に少し小さくする（スマホらしいフィードバック） */
+.fav-star:active {
+  transform: scale(1.2);
 }
 
 /* 詳細画面用の星ボタン */
@@ -244,7 +252,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.01
+ v1.02
 
  
 
