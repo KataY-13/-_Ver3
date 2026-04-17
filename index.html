@@ -2,38 +2,30 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>レシピアプリ v2.0</title>
+<title>レシピアプリ v2.1</title>
 
 <style>
-body { margin:0; font-family:sans-serif; background:#f2f2f7; }
+body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow-x: hidden; }
 .container { padding:10px 10px 110px; }
 
 /* タブバー */
 .tabbar {
- position:fixed;
- bottom:0;
- width:100%;
- display:flex;
- background:#fff;
- border-top:1px solid #ccc;
- z-index: 100;
+ position:fixed; bottom:0; width:100%; display:flex;
+ background:#fff; border-top:1px solid #ccc; z-index: 100;
 }
-.tabbar button {
- flex:1;
- padding:25px;
- font-size:18px;
- border:none;
- background:none;
-}
+.tabbar button { flex:1; padding:25px; font-size:18px; border:none; background:none; }
 
 /* カード・グリッド */
-.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .card { 
-  background:#fff; border-radius:12px; overflow:hidden; font-size:11px; 
+  background:#fff; border-radius:12px; overflow:hidden; 
   box-shadow:0 2px 6px rgba(0,0,0,0.08); position: relative;
+  display: flex; flex-direction: column;
 }
 .card img { width:100%; height:80px; object-fit:cover; }
-.card div { text-align:center; padding:2px; }
+.card-info { padding: 6px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.card-title { font-size:11px; font-weight: bold; line-height: 1.3; word-break: break-all; margin-bottom: 4px; }
+.badge { align-self: flex-end; font-size: 9px; color: #888; background: #eee; padding: 1px 4px; border-radius: 4px; }
 
 /* 星マーク */
 .fav-star {
@@ -45,52 +37,47 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; }
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
-/* カード右下の情報バッジ */
-.badge {
-  position: absolute; bottom: 20px; right: 2px;
-  background: rgba(255,255,255,0.8); padding: 1px 4px; border-radius: 4px; font-size: 9px;
+/* ボタン共通設定 */
+button:not(.tabbar button, .chip, .sort-btn) { 
+  min-height:44px; font-size:16px; padding:10px; border:none; border-radius:10px; 
+  background:#e5f0ff; color:#007aff;
 }
+.btn-red { background: #ffe5e5 !important; color: #ff3b30 !important; }
+.btn-green { background: #e5f7e5 !important; color: #34c759 !important; }
 
-/* フィルタエリア */
+/* フィルタ・ソート */
 .filter-bar { display:flex; gap:8px; margin:10px 0; }
-.filter-btn {
-  flex:1; padding:8px; border-radius:10px; border:1px solid #ddd; background:#fff; font-size:12px;
-}
+.filter-btn { flex:1; padding:8px; border-radius:10px; border:1px solid #ddd; background:#fff; font-size:12px; }
 .filter-btn.active { background:#007aff !important; color:#fff !important; border:none; }
-
-/* ソートエリア */
-.sort-area { display:flex; gap:5px; margin-bottom:10px; overflow-x:auto; padding-bottom:5px; }
-.sort-btn { white-space:nowrap; font-size:11px; padding:5px 10px; border-radius:15px; border:1px solid #ccc; background:#eee; }
+.sort-area { display:flex; gap:5px; margin-bottom:10px; overflow-x:auto; }
+.sort-btn { white-space:nowrap; font-size:11px; padding:6px 12px; border-radius:15px; border:1px solid #ccc; background:#eee; }
 .sort-btn.active { background:#555; color:#fff; }
 
-/* 単位チップ */
+/* 単位チップ（キーボードの上に来るよう調整） */
 #unitChips {
-  position: fixed; bottom: 0; left: 0; width: 100%; background: #ddd;
-  display: none; flex-wrap: wrap; gap: 5px; padding: 10px; z-index: 200;
+  position: fixed; bottom: 0; left: 0; width: 100%; background: #f8f8f8;
+  display: none; flex-wrap: wrap; gap: 8px; padding: 12px; z-index: 200;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box;
 }
-.chip { background: #fff; padding: 8px 12px; border-radius: 20px; font-size: 14px; }
+.chip { background: #fff; padding: 10px 15px; border-radius: 8px; font-size: 14px; border: 1px solid #ddd; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
-/* 上下移動ボタン */
+/* 上下移動ボタン（位置を中央寄せに調整） */
 .scroll-btn {
-  position: fixed; right: 15px; width: 44px; height: 44px;
-  background: rgba(0,122,255,0.8); color: #fff; border-radius: 50%;
+  position: fixed; right: 25px; width: 48px; height: 48px;
+  background: rgba(0,0,0,0.5); color: #fff; border-radius: 50%;
   display: none; align-items: center; justify-content: center; z-index: 90; font-size: 20px;
+  transition: opacity 0.3s;
 }
-#scrollTop { top: 70px; }
+#scrollTop { top: 80px; }
 #scrollBottom { bottom: 100px; }
 
-/* 既存スタイル継承 */
+/* 既存スタイル */
 .groupTitle { background:#e5e5ea; padding:10px; margin-top:10px; font-weight:bold; border-radius:8px; }
-.detail-img { width:60%; max-width:250px; display:block; margin:10px auto; border-radius:10px; }
-#add input, #add textarea { font-size:16px; padding:12px; width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:10px; margin-bottom:5px;}
-.row { display:flex; gap:5px; margin-top:5px; }
-.delBtn { background:#ff3b30; color:#fff; border:none; border-radius:8px; padding:0 10px; }
-.groupBox { background:#fff; padding:8px; margin:8px 0; border-radius:8px; }
-.hidden { display:none; }
-.topbar { display:flex; justify-content:space-between; gap:8px; align-items:center; }
-button:not(.tabbar button, .chip, .sort-btn) { 
-  min-height:44px; font-size:16px; padding:10px; border:none; border-radius:10px; background:#e5f0ff; color:#007aff;
-}
+.detail-img { width:100%; max-width:300px; display:block; margin:10px auto; border-radius:12px; }
+.groupBox { background:#fff; padding:8px; margin:8px 0; border-radius:10px; }
+.row { display:flex; gap:5px; margin-top:5px; align-items: center; }
+.step-num { width: 24px; font-weight: bold; color: #888; }
+.hidden { display:none !important; }
 #toast {
  position:fixed; bottom:120px; left:50%; transform:translateX(-50%);
  background:rgba(0,0,0,0.8); color:#fff; padding:12px 20px; border-radius:20px;
@@ -104,21 +91,21 @@ button:not(.tabbar button, .chip, .sort-btn) {
 <body>
 
 <div class="container">
-  <div id="version" style="font-size:12px; color:#aaa; text-align:right;">
-    v2.00
-  </div>
-
-
-
-
-
-
+  <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:5px;">
+   v2.01
   
-
+  
+  
+  
+  
+  
+  
+  
+  </div>
   <div id="listBar" class="topbar">
-    <input id="search" placeholder="検索" oninput="renderList()" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;">
-    <button onclick="exportData()">バックアップ</button>
-    <label style="padding:10px; background:#e5f0ff; border-radius:10px; color:#007aff;">
+    <input id="search" placeholder="検索" oninput="renderList()" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd; font-size: 16px;">
+    <button onclick="exportData()">保存</button>
+    <label style="padding:10px; background:#e5f0ff; border-radius:10px; color:#007aff; font-size:14px;">
       復元 <input type="file" onchange="importData(this.files[0])" style="display:none;">
     </label>
   </div>
@@ -130,8 +117,8 @@ button:not(.tabbar button, .chip, .sort-btn) {
     </div>
     <div class="sort-area">
       <button class="sort-btn active" id="sort-reg" onclick="setSort('reg')">登録順</button>
-      <button class="sort-btn" id="sort-count" onclick="setSort('count')">調理回数順</button>
-      <button class="sort-btn" id="sort-date" onclick="setSort('date')">最終調理日順</button>
+      <button class="sort-btn" id="sort-count" onclick="setSort('調理回数')">調理回数順</button>
+      <button class="sort-btn" id="sort-date" onclick="setSort('最終調理日')">最終調理日順</button>
     </div>
   </div>
 
@@ -139,68 +126,58 @@ button:not(.tabbar button, .chip, .sort-btn) {
   <div id="detail" class="hidden"></div>
 
   <div id="add" class="hidden">
-    <div class="topbar">
-      <h3>レシピ登録</h3>
-      <div style="display:flex; gap:6px;">
-        <button onclick="saveRecipe()">保存</button>
-        <button onclick="clearForm()">クリア</button>
-      </div>
-    </div>
-    <input id="sourceUrl" placeholder="ソース元URL">
-    <input id="title" placeholder="タイトル">
-    <input type="file" id="imageFile">
-    <input id="group" placeholder="主菜など">
+    <div class="topbar"><h3>レシピ登録</h3><button onclick="saveRecipe()">保存</button></div>
+    <input id="sourceUrl" placeholder="ソース元URL" style="width:100%; padding:12px; margin-top:10px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd;">
+    <input id="title" placeholder="タイトル" style="width:100%; padding:12px; margin-top:5px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd;">
+    <input type="file" id="imageFile" style="margin: 10px 0;">
+    <input id="group" placeholder="主菜など" style="width:100%; padding:12px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd;">
+    
     <h4>材料</h4>
     <div id="ingredientsArea"></div>
     <button onclick="addGroup()">材料グループ追加</button>
+    
     <h4>作り方</h4>
     <div id="stepsArea"></div>
     <button onclick="addStep()">工程追加</button>
   </div>
 
   <div id="shopping" class="hidden">
-    <div class="topbar"><h3>買い物リスト</h3><button onclick="clearShopping()">クリア</button></div>
-    <input id="manualItem" placeholder="材料" style="width:40%; padding:10px;">
-    <input id="manualAmount" placeholder="分量" style="width:30%; padding:10px;">
-    <button onclick="addManual()">追加</button>
+    <div class="topbar"><h3>買い物リスト</h3><button onclick="clearShopping()" class="btn-red">クリア</button></div>
+    <div class="row"><input id="manualItem" placeholder="材料" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><input id="manualAmount" placeholder="分量" style="width:80px; padding:12px; border-radius:10px; border:1px solid #ddd;"><button onclick="addManual()">追加</button></div>
     <ul id="shopList" style="padding:0;"></ul>
   </div>
 </div>
 
-<div id="scrollTop" class="scroll-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})">▲</div>
-<div id="scrollBottom" class="scroll-btn" onclick="window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'})">▼</div>
-
+<div id="scrollTop" class="scroll-btn">▲</div>
+<div id="scrollBottom" class="scroll-btn">▼</div>
 <div id="unitChips"></div>
-
 <div class="tabbar">
   <button onclick="show('list')">一覧</button>
   <button onclick="show('add')">登録</button>
   <button onclick="show('shopping')">買い物</button>
 </div>
-
 <div id="toast"></div>
 
 <script>
 let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
-let editIndex = null;
-let formImage = null;
-let openGroups = {};
-let currentFilter = 'all';
-let currentSort = 'reg';
-let activeAmountInput = null;
+let editIndex = null, formImage = null, openGroups = {}, currentFilter = 'all', currentSort = 'reg', activeAmountInput = null;
+let scrollTimeout;
 
 const units = ["大さじ", "小さじ", "g", "ml", "cm", "個", "本", "枚", "パック", "袋", "適量", "合", "片分"];
 
 /* --- 画面制御 --- */
 function show(p){
-  const ids = ["list", "detail", "add", "shopping", "filterArea"];
-  ids.forEach(id => document.getElementById(id).classList.add("hidden"));
-  document.getElementById("listBar").style.display = (p==="list") ? "flex" : "none";
+  const views = ["list", "detail", "add", "shopping", "filterArea", "listBar"];
+  views.forEach(v => {
+    let el = document.getElementById(v);
+    if(el) el.classList.add("hidden");
+  });
   
   if(p==="list") {
     document.getElementById("list").classList.remove("hidden");
     document.getElementById("filterArea").classList.remove("hidden");
+    document.getElementById("listBar").classList.remove("hidden");
     renderList();
   } else {
     document.getElementById(p).classList.remove("hidden");
@@ -209,20 +186,23 @@ function show(p){
   window.scrollTo(0,0);
 }
 
-/* --- スクロールボタン制御 --- */
+/* --- スクロールボタン（自動消去） --- */
 window.onscroll = function() {
-  let top = document.getElementById("scrollTop");
-  let bot = document.getElementById("scrollBottom");
-  if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
-    top.style.display = "flex";
-    bot.style.display = "flex";
-  } else {
-    top.style.display = "none";
-    bot.style.display = "none";
-  }
-};
+  const top = document.getElementById("scrollTop");
+  const bot = document.getElementById("scrollBottom");
+  top.style.display = "flex"; top.style.opacity = "1";
+  bot.style.display = "flex"; bot.style.opacity = "1";
 
-/* --- 画像圧縮処理 --- */
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    top.style.opacity = "0"; bot.style.opacity = "0";
+    setTimeout(() => { top.style.display = "none"; bot.style.display = "none"; }, 300);
+  }, 1500);
+};
+document.getElementById("scrollTop").onclick = () => window.scrollTo({top:0, behavior:'smooth'});
+document.getElementById("scrollBottom").onclick = () => window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+
+/* --- 画像圧縮 --- */
 document.getElementById("imageFile").addEventListener("change", function(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -233,8 +213,7 @@ document.getElementById("imageFile").addEventListener("change", function(e){
       const canvas = document.createElement('canvas');
       const MAX_WIDTH = 500;
       const scaleSize = MAX_WIDTH / img.width;
-      canvas.width = MAX_WIDTH;
-      canvas.height = img.height * scaleSize;
+      canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       formImage = canvas.toDataURL('image/jpeg', 0.7);
@@ -245,11 +224,13 @@ document.getElementById("imageFile").addEventListener("change", function(e){
 });
 
 /* --- 一覧描画 --- */
-function setFilter(m){ currentFilter=m; show('list'); }
+function setFilter(m){ currentFilter=m; renderList(); document.getElementById("btnAll").classList.toggle("active", m==='all'); document.getElementById("btnFav").classList.toggle("active", m==='fav');}
 function setSort(s){ 
   currentSort=s; 
   document.querySelectorAll(".sort-btn").forEach(b=>b.classList.remove("active"));
-  document.getElementById("sort-"+s).classList.add("active");
+  if(s==='reg') document.getElementById("sort-reg").classList.add("active");
+  else if(s==='調理回数') document.getElementById("sort-count").classList.add("active");
+  else document.getElementById("sort-date").classList.add("active");
   renderList(); 
 }
 
@@ -260,10 +241,17 @@ function renderList(){
   let groups = {};
 
   recipes.forEach((r, i) => {
-    let hit = toKatakana(r.title.toLowerCase()).includes(key);
+    // タイトルがヒットするかチェック
+let titleHit = toKatakana(r.title.toLowerCase()).includes(key);
+
+// 材料の中にヒットするものがあるかチェック
+let ingredientHit = r.ingredients.some(g => 
+  g.items.some(it => toKatakana(it.name.toLowerCase()).includes(key))
+);
+
+let hit = titleHit || ingredientHit;
     if(currentFilter === 'fav' && !r.favorite) hit = false;
     if(!hit) return;
-
     let g = (r.group || "").trim() || "未分類";
     if(!groups[g]) groups[g] = [];
     groups[g].push({r, i});
@@ -271,22 +259,19 @@ function renderList(){
 
   Object.keys(groups).sort().forEach(gName => {
     if(openGroups[gName] === undefined) openGroups[gName] = true;
-    
-    // グループ内ソート
     groups[gName].sort((a, b) => {
-      if(currentSort === 'count') return (b.r.count || 0) - (a.r.count || 0);
-      if(currentSort === 'date') {
+      if(currentSort === '調理回数') return (b.r.count || 0) - (a.r.count || 0);
+      if(currentSort === '最終調理日') {
         let da = a.r.lastDate || "00/00/00";
         let db = b.r.lastDate || "00/00/00";
         return db.localeCompare(da);
       }
-      return 0; // 登録順はそのまま
+      return 0;
     });
 
     let box = document.createElement("div");
     let title = document.createElement("div");
-    title.className = "groupTitle";
-    title.textContent = gName;
+    title.className = "groupTitle"; title.textContent = gName;
     title.onclick = () => { openGroups[gName] = !openGroups[gName]; renderList(); };
     box.appendChild(title);
 
@@ -295,14 +280,16 @@ function renderList(){
       wrap.className = "grid";
       groups[gName].forEach(obj => {
         let r = obj.r;
-        let info = (currentSort === 'date') ? (r.lastDate || "--") : `×${r.count || 0}`;
+        let info = (currentSort === '最終調理日') ? (r.lastDate || "--") : `×${r.count || 0}`;
         let div = document.createElement("div");
         div.className = "card";
         div.innerHTML = `
           <div class="fav-star ${r.favorite?'active':''}" onclick="toggleFavorite(event, ${obj.i})">★</div>
           <img src="${r.image || ''}">
-          <div class="badge">${info}</div>
-          <div>${r.title}</div>
+          <div class="card-info">
+            <div class="card-title">${r.title}</div>
+            <div class="badge">${info}</div>
+          </div>
         `;
         div.onclick = () => detailView(obj.i);
         wrap.appendChild(div);
@@ -313,24 +300,24 @@ function renderList(){
   });
 }
 
-/* --- 詳細画面 --- */
+/* --- 詳細画面（スワイプ戻り機能付き） --- */
+let touchStartX = 0;
 function detailView(i){
   let r = recipes[i];
   const detailDiv = document.getElementById("detail");
-  detailDiv.classList.remove("hidden");
-  document.getElementById("list").classList.add("hidden");
-  document.getElementById("filterArea").classList.add("hidden");
-
+  show('detail'); 
+  
   let html = `
-    <button onclick="show('list')">← 戻る</button>
-    <h2 style="text-align:center;">${r.title}</h2>
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-      <button style="flex:1;" onclick="toggleFavorite(null, ${i})">${r.favorite?'★ 解除':'☆ お気に入り'}</button>
-      <button style="flex:1; background:#34c759; color:#fff;" onclick="cookToday(${i})">今日作った！</button>
-    </div>
-    <div style="font-size:12px; color:#666; text-align:center; margin-bottom:10px;">
-      調理回数: ${r.count||0}回 / 最終調理日: ${r.lastDate||'なし'}
-    </div>
+    <div id="swipeArea" style="min-height: 80vh;">
+      <button onclick="show('list')">← 戻る</button>
+      <h2 style="text-align:center; margin: 15px 0;">${r.title}</h2>
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button style="flex:1;" onclick="toggleFavorite(null, ${i})">${r.favorite?'★ 解除':'☆ お気に入り'}</button>
+        <button style="flex:1;" class="btn-green" onclick="cookToday(${i})">今日作った！</button>
+      </div>
+      <div style="font-size:12px; color:#666; text-align:center; margin-bottom:15px;">
+        調理回数: ${r.count||0}回 / 最終調理日: ${r.lastDate||'なし'}
+      </div>
   `;
 
   if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
@@ -339,21 +326,30 @@ function detailView(i){
   r.ingredients.forEach(g => {
     html += `<h3>${g.name}</h3>`;
     g.items.forEach(it => {
-      html += `<label style="display:block; padding:5px 0;"><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}"> ${it.name} (${it.amount})</label>`;
+      html += `<label style="display:block; padding:8px 0; border-bottom:1px solid #eee;"><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}"> ${it.name} (${it.amount})</label>`;
     });
   });
 
   html += `<h3>作り方</h3>`;
-  r.steps.forEach(s => html += `<p style="border-bottom:1px solid #eee; padding-bottom:5px;">${s}</p>`);
+  r.steps.forEach(s => html += `<p style="border-bottom:1px solid #eee; padding-bottom:8px; line-height:1.4;">${s}</p>`);
 
   html += `
-    <button style="width:100%; margin-top:10px;" onclick="addShopping()">買い物リストへ追加</button>
-    <div style="display:flex; gap:10px; margin-top:10px;">
-      <button style="flex:1;" onclick="editRecipe(${i})">編集</button>
-      <button style="flex:1; background:#ff3b30; color:#fff;" onclick="deleteRecipe(${i})">削除</button>
+      <button style="width:100%; margin-top:20px;" onclick="addShopping()">買い物リストへ追加</button>
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button style="flex:1;" onclick="editRecipe(${i})">編集</button>
+        <button style="flex:1;" class="btn-red" onclick="deleteRecipe(${i})">削除</button>
+      </div>
     </div>
   `;
   detailDiv.innerHTML = html;
+
+  // スワイプジェスチャー設定
+  const sa = document.getElementById("swipeArea");
+  sa.ontouchstart = (e) => touchStartX = e.touches[0].clientX;
+  sa.ontouchend = (e) => {
+    let diff = e.changedTouches[0].clientX - touchStartX;
+    if (touchStartX < 50 && diff > 100) show('list'); // 画面左端から右へ100pxスワイプ
+  };
 }
 
 /* --- 調理記録 --- */
@@ -378,204 +374,133 @@ function toggleFavorite(e, i){
 /* --- 単位チップ --- */
 function setupChips() {
   const area = document.getElementById("unitChips");
-  area.innerHTML = "";
   units.forEach(u => {
     let span = document.createElement("span");
-    span.className = "chip";
-    span.textContent = u;
-    span.onmousedown = (e) => { // clickだとfocusが外れるのでmousedown
-      e.preventDefault();
-      if(activeAmountInput) {
-        activeAmountInput.value += u;
-        // 入力後にフォーカスを外さない
-      }
-    };
+    span.className = "chip"; span.textContent = u;
+    span.onmousedown = (e) => { e.preventDefault(); if(activeAmountInput) activeAmountInput.value += u; };
     area.appendChild(span);
   });
 }
+function showChips(input) { activeAmountInput = input; document.getElementById("unitChips").style.display = "flex"; }
+function hideChips() { setTimeout(() => { document.getElementById("unitChips").style.display = "none"; activeAmountInput = null; }, 200); }
 
-function showChips(input) {
-  activeAmountInput = input;
-  document.getElementById("unitChips").style.display = "flex";
-}
-function hideChips() {
-  setTimeout(() => {
-    document.getElementById("unitChips").style.display = "none";
-    activeAmountInput = null;
-  }, 200);
-}
-
-/* --- レシピ保存系 --- */
+/* --- 保存・編集 --- */
 function saveRecipe(){
   let ing = [];
   document.querySelectorAll("#ingredientsArea .groupBox").forEach(g => {
     let items = [];
     g.querySelectorAll(".row").forEach(row => {
       let ins = row.querySelectorAll("input");
-      items.push({name: ins[0].value, amount: ins[1].value});
+      if(ins[0].value) items.push({name: ins[0].value, amount: ins[1].value});
     });
-    ing.push({name: g.querySelector("input").value, items});
+    ing.push({name: g.querySelector("input").value || "材料", items});
   });
-
   let steps = [];
   document.querySelectorAll("#stepsArea textarea").forEach((t, i) => {
-    if(t.value.trim()) steps.push((i+1) + ". " + t.value);
+    if(t.value.trim()) steps.push((i+1) + ". " + t.value.trim());
   });
-
   let data = {
-    title: document.getElementById("title").value,
-    group: document.getElementById("group").value,
-    image: formImage,
-    sourceUrl: document.getElementById("sourceUrl").value,
-    ingredients: ing,
-    steps: steps,
+    title: document.getElementById("title").value || "無題のレシピ",
+    group: document.getElementById("group").value || "未分類",
+    image: formImage, sourceUrl: document.getElementById("sourceUrl").value,
+    ingredients: ing, steps: steps,
     favorite: editIndex !== null ? recipes[editIndex].favorite : false,
     count: editIndex !== null ? recipes[editIndex].count : 0,
     lastDate: editIndex !== null ? recipes[editIndex].lastDate : null
   };
-
-  if(editIndex !== null) recipes[editIndex] = data;
-  else recipes.push(data);
-
+  if(editIndex !== null) recipes[editIndex] = data; else recipes.push(data);
   localStorage.setItem("recipes", JSON.stringify(recipes));
-  clearForm();
-  show("list");
-  showToast("保存しました");
+  clearForm(); show("list"); showToast("保存しました");
 }
 
 function editRecipe(i){
-  editIndex = i;
-  let r = recipes[i];
-  formImage = r.image;
-  show("add");
-  document.getElementById("title").value = r.title;
-  document.getElementById("group").value = r.group;
+  editIndex = i; let r = recipes[i]; formImage = r.image; show("add");
+  document.getElementById("title").value = r.title; document.getElementById("group").value = r.group;
   document.getElementById("sourceUrl").value = r.sourceUrl || "";
-  
   document.getElementById("ingredientsArea").innerHTML = "";
   r.ingredients.forEach(g => {
-    addGroup();
-    let gBox = document.getElementById("ingredientsArea").lastChild;
+    addGroup(); let gBox = document.getElementById("ingredientsArea").lastChild;
     gBox.querySelector("input").value = g.name;
-    let itemsDiv = gBox.querySelector(".items");
-    itemsDiv.innerHTML = "";
+    let itemsDiv = gBox.querySelector(".items"); itemsDiv.innerHTML = "";
     g.items.forEach(it => {
-      addItem(itemsDiv);
-      let row = itemsDiv.lastChild;
-      row.querySelectorAll("input")[0].value = it.name;
-      row.querySelectorAll("input")[1].value = it.amount;
+      addItem(itemsDiv); let row = itemsDiv.lastChild;
+      row.querySelectorAll("input")[0].value = it.name; row.querySelectorAll("input")[1].value = it.amount;
     });
   });
-
   document.getElementById("stepsArea").innerHTML = "";
   r.steps.forEach(s => {
-    addStep();
-    document.getElementById("stepsArea").lastChild.querySelector("textarea").value = s.replace(/^\d+\.\s*/, "");
+    addStep(); document.getElementById("stepsArea").lastChild.querySelector("textarea").value = s.replace(/^\d+\.\s*/, "");
   });
 }
 
-function deleteRecipe(i){
-  if(confirm("削除しますか？")){
-    recipes.splice(i,1);
-    localStorage.setItem("recipes", JSON.stringify(recipes));
-    show("list");
-  }
-}
+function deleteRecipe(i){ if(confirm("削除しますか？")){ recipes.splice(i,1); localStorage.setItem("recipes", JSON.stringify(recipes)); show("list"); } }
 
 /* --- 入力補助 --- */
 function addGroup(){
-  let div = document.createElement("div");
-  div.className = "groupBox";
+  let div = document.createElement("div"); div.className = "groupBox";
   div.innerHTML = `
-    <div style="display:flex; gap:5px;"><input placeholder="グループ名(材料)" style="flex:1;"><button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button></div>
+    <div class="row"><input placeholder="グループ名(例:肉下味)" style="flex:1;"><button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button></div>
     <div class="items"></div>
-    <button onclick="addItem(this.previousElementSibling)" style="margin-top:5px;">材料追加</button>
+    <button onclick="addItem(this.previousElementSibling)" style="margin-top:5px; background:#f0f0f0; color:#555; min-height:35px; font-size:14px;">+ 材料追加</button>
   `;
   document.getElementById("ingredientsArea").appendChild(div);
   addItem(div.querySelector(".items"));
 }
-
 function addItem(container){
-  let row = document.createElement("div");
-  row.className = "row";
-  row.innerHTML = `
-    <input placeholder="材料" style="flex:4;">
-    <input placeholder="分量" style="flex:3;" onfocus="showChips(this)" onblur="hideChips()">
-    <button class="delBtn" onclick="this.parentNode.remove()">×</button>
-  `;
+  let row = document.createElement("div"); row.className = "row";
+  row.innerHTML = `<input placeholder="材料" style="flex:1;"><input placeholder="分量" style="width:70px;" onfocus="showChips(this)" onblur="hideChips()"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
   container.appendChild(row);
 }
-
 function addStep(){
-  let div = document.createElement("div");
-  div.className = "row";
-  div.innerHTML = `<textarea style="flex:1; height:60px;"></textarea><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
+  let div = document.createElement("div"); div.className = "row";
+  let idx = document.querySelectorAll("#stepsArea .row").length + 1;
+  div.innerHTML = `<div class="step-num">${idx}.</div><textarea style="flex:1; height:60px; padding:8px; border-radius:8px; border:1px solid #ddd;"></textarea><button class="delBtn" onclick="this.parentNode.remove(); updateStepNums();">×</button>`;
   document.getElementById("stepsArea").appendChild(div);
+}
+function updateStepNums(){
+  document.querySelectorAll("#stepsArea .row").forEach((row, i) => { row.querySelector(".step-num").textContent = (i + 1) + "."; });
 }
 
 function clearForm(){
-  document.getElementById("title").value = "";
-  document.getElementById("group").value = "";
-  document.getElementById("sourceUrl").value = "";
-  document.getElementById("imageFile").value = "";
-  document.getElementById("ingredientsArea").innerHTML = "";
-  document.getElementById("stepsArea").innerHTML = "";
+  document.getElementById("title").value = ""; document.getElementById("group").value = "";
+  document.getElementById("sourceUrl").value = ""; document.getElementById("imageFile").value = "";
+  document.getElementById("ingredientsArea").innerHTML = ""; document.getElementById("stepsArea").innerHTML = "";
   formImage = null; editIndex = null;
 }
 
-/* --- 買い物リスト --- */
+/* --- 買い物 --- */
 function addShopping(){
-  document.querySelectorAll("#detail input:checked").forEach(c => {
-    shopping.push({name: c.dataset.name, amount: c.dataset.amount, checked: false});
-  });
-  localStorage.setItem("shopping", JSON.stringify(shopping));
-  showToast("買い物リストに追加しました");
+  document.querySelectorAll("#detail input:checked").forEach(c => { shopping.push({name: c.dataset.name, amount: c.dataset.amount, checked: false}); });
+  localStorage.setItem("shopping", JSON.stringify(shopping)); showToast("買い物リストに追加しました");
 }
 function addManual(){
-  let n = document.getElementById("manualItem");
-  let a = document.getElementById("manualAmount");
-  if(!n.value) return;
-  shopping.push({name: n.value, amount: a.value, checked: false});
-  n.value = ""; a.value = "";
-  localStorage.setItem("shopping", JSON.stringify(shopping));
-  renderShopping();
+  let n = document.getElementById("manualItem"), a = document.getElementById("manualAmount");
+  if(!n.value) return; shopping.push({name: n.value, amount: a.value, checked: false});
+  n.value = ""; a.value = ""; localStorage.setItem("shopping", JSON.stringify(shopping)); renderShopping();
 }
 function renderShopping(){
-  let list = document.getElementById("shopList");
-  list.innerHTML = "";
+  let list = document.getElementById("shopList"); list.innerHTML = "";
   shopping.sort((a,b)=>a.checked - b.checked).forEach((s, i) => {
     let li = document.createElement("li");
-    li.style = "list-style:none; background:#fff; margin:5px 0; padding:10px; border-radius:10px; display:flex; align-items:center; gap:10px;";
+    li.style = "list-style:none; background:#fff; margin:8px 0; padding:12px; border-radius:12px; display:flex; align-items:center; gap:10px; box-shadow:0 1px 3px rgba(0,0,0,0.1);";
     if(s.checked) li.style.opacity = "0.5";
     li.innerHTML = `
-      <input type="checkbox" ${s.checked?'checked':''} onchange="shopping[${i}].checked=!shopping[${i}].checked; localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();">
+      <input type="checkbox" style="transform:scale(1.3);" ${s.checked?'checked':''} onchange="shopping[${i}].checked=!shopping[${i}].checked; localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();">
       <span style="flex:1; ${s.checked?'text-decoration:line-through':''}">${s.name} (${s.amount})</span>
       <button onclick="shopping.splice(${i},1); localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();" class="delBtn">×</button>
     `;
     list.appendChild(li);
   });
 }
-function clearShopping(){ shopping = []; localStorage.setItem("shopping", "[]"); renderShopping(); }
+function clearShopping(){ if(confirm("リストを空にしますか？")){ shopping = []; localStorage.setItem("shopping", "[]"); renderShopping(); } }
 
-/* --- ユーティリティ --- */
+/* --- 共通 --- */
 function toKatakana(str){ return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60)); }
-function showToast(m){ 
-  let t = document.getElementById("toast"); t.textContent = m; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 2000);
-}
-function exportData(){
-  let blob = new Blob([localStorage.getItem("recipes")], {type:"application/json"});
-  let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recipes.json"; a.click();
-}
-function importData(f){
-  let r = new FileReader();
-  r.onload = e => { localStorage.setItem("recipes", e.target.result); recipes = JSON.parse(e.target.result); renderList(); showToast("復元しました"); };
-  r.readAsText(f);
-}
+function showToast(m){ let t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2000); }
+function exportData(){ let blob = new Blob([localStorage.getItem("recipes")], {type:"application/json"}); let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recipes.json"; a.click(); }
+function importData(f){ let r = new FileReader(); r.onload = e => { localStorage.setItem("recipes", e.target.result); recipes = JSON.parse(e.target.result); renderList(); showToast("復元しました"); }; r.readAsText(f); }
 
-// 初期化
-setupChips();
-show('list');
+setupChips(); show('list');
 </script>
 </body>
 </html>
