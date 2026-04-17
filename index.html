@@ -47,8 +47,26 @@ button:not(.tabbar button, .chip, .sort-btn) {
 
 /* フィルタ・ソート */
 .filter-bar { display:flex; gap:8px; margin:10px 0; }
-.filter-btn { flex:1; padding:8px; border-radius:10px; border:1px solid #ddd; background:#fff; font-size:12px; }
-.filter-btn.active { background:#007aff !important; color:#fff !important; border:none; }
+/* フィルタボタンの配色修正 */
+.filter-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: none; /* 枠線を消してスッキリさせる */
+  /* 選ばれていない時：薄い青背景に濃い青文字 */
+  background: #e5f0ff;
+  color: #007aff;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  /* 選ばれている時：濃い青背景に白文字 */
+  background: #007aff !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(0,122,255,0.3);
+}
 .sort-area { display:flex; gap:5px; margin-bottom:10px; overflow-x:auto; }
 .sort-btn { white-space:nowrap; font-size:11px; padding:6px 12px; border-radius:15px; border:1px solid #ccc; background:#eee; }
 .sort-btn.active { background:#555; color:#fff; }
@@ -92,7 +110,7 @@ button:not(.tabbar button, .chip, .sort-btn) {
 
 <div class="container">
   <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:5px;">
-   v2.01
+   v2.02
   
   
   
