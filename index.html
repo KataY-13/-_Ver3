@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>レシピアプリ v2.2</title>
+<title>レシピアプリ</title>
 
 <style>
 body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow-x: hidden; }
@@ -27,18 +27,27 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow-x: hidden;
 .card-title { font-size:11px; font-weight: bold; line-height: 1.3; word-break: break-all; margin-bottom: 4px; }
 .badge { align-self: flex-end; font-size: 9px; color: #888; background: #eee; padding: 1px 4px; border-radius: 4px; }
 
+/* 星マーク */
+.fav-star {
+ position: absolute; top: 4px; right: 4px; font-size: 26px; cursor: pointer; z-index: 10;
+ color: #000;
+}
+.fav-star.active {
+ color: #ffcc00;
+ text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, -1px 1px 0 #000;
+}
+
 /* ボタン共通設定 */
 button:not(.tabbar button, .chip, .sort-btn) { 
-  min-height:44px; font-size:16px; padding:10px; border:none; border-radius:10px; 
-  background:#e5f0ff; color:#007aff;
+ min-height:44px; font-size:16px; padding:10px; border:none; border-radius:10px; 
+ background:#e5f0ff; color:#007aff;
 }
 .btn-red { background: #ffe5e5 !important; color: #ff3b30 !important; }
 .btn-green { background: #e5f7e5 !important; color: #34c759 !important; }
 
-/* 削除ボタンのサイズと隙間を調整（修正ポイント） */
+/* 削除ボタンのサイズ（修正版） */
 .delBtn {
-  min-height: 32px !important;
-  height: 32px; width: 32px; padding: 0 !important;
+  min-height: 32px !important; height: 32px; width: 32px; padding: 0 !important;
   display: flex; align-items: center; justify-content: center;
   background: #eee !important; color: #ff3b30 !important;
   border-radius: 50% !important; font-size: 18px; flex-shrink: 0;
@@ -47,18 +56,26 @@ button:not(.tabbar button, .chip, .sort-btn) {
 /* フィルタ・ソート */
 .filter-bar { display:flex; gap:8px; margin:10px 0; }
 .filter-btn {
-  flex: 1; padding: 8px; border-radius: 10px; border: none;
-  background: #e5f0ff; color: #007aff; font-size: 12px; font-weight: bold;
+ flex: 1; padding: 8px; border-radius: 10px; border: none;
+ background: #e5f0ff; color: #007aff; font-size: 12px; font-weight: bold;
 }
 .filter-btn.active { background: #007aff !important; color: #ffffff !important; }
 .sort-area { display:flex; gap:5px; margin-bottom:10px; overflow-x:auto; }
 .sort-btn { white-space:nowrap; font-size:11px; padding:6px 12px; border-radius:15px; border:1px solid #ccc; background:#eee; }
 .sort-btn.active { background:#555; color:#fff; }
 
-/* 詳細画面 */
+/* 単位チップ */
+#unitChips {
+ position: fixed; bottom: 0; left: 0; width: 100%; background: #f8f8f8;
+ display: none; flex-wrap: wrap; gap: 8px; padding: 12px; z-index: 200;
+ box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box;
+}
+.chip { background: #fff; padding: 10px 15px; border-radius: 8px; font-size: 14px; border: 1px solid #ddd; }
+
+/* 詳細画面（加速スライド対応） */
 #detail {
-  position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 75px);
-  background: #f2f2f7; overflow-y: auto; z-index: 50; transition: transform 0.3s ease-out; box-sizing: border-box;
+ position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 75px);
+ background: #f2f2f7; overflow-y: auto; z-index: 50; transition: transform 0.3s ease-out; box-sizing: border-box;
 }
 
 /* 既存スタイル */
@@ -66,6 +83,7 @@ button:not(.tabbar button, .chip, .sort-btn) {
 .detail-img { width:100%; max-width:300px; display:block; margin:10px auto; border-radius:12px; }
 .groupBox { background:#fff; padding:10px; margin:6px 0; border-radius:10px; }
 .row { display:flex; gap:8px; margin-top:4px; align-items: center; }
+.step-num { width: 24px; font-weight: bold; color: #888; }
 .hidden { display:none !important; }
 #toast {
  position:fixed; bottom:120px; left:50%; transform:translateX(-50%);
@@ -80,17 +98,32 @@ button:not(.tabbar button, .chip, .sort-btn) {
 <body>
 
 <div class="container">
-  <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:5px;">v2.10</div>
+  <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:5px;">
+   v2.03
   
+  
+  
+  
+  
+  
+  </div>
   <div id="listBar" class="topbar">
     <input id="search" placeholder="材料・タイトル検索" oninput="renderList()" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd; font-size: 16px;">
     <button onclick="exportData()">保存</button>
+    <label style="padding:10px; background:#e5f0ff; border-radius:10px; color:#007aff; font-size:14px;">
+      復元 <input type="file" onchange="importData(this.files[0])" style="display:none;">
+    </label>
   </div>
 
   <div id="filterArea">
     <div class="filter-bar">
       <button id="btnAll" class="filter-btn active" onclick="setFilter('all')">すべて</button>
       <button id="btnFav" class="filter-btn" onclick="setFilter('fav')">お気に入り★</button>
+    </div>
+    <div class="sort-area">
+      <button class="sort-btn active" id="sort-reg" onclick="setSort('reg')">登録順</button>
+      <button class="sort-btn" id="sort-count" onclick="setSort('調理回数')">調理回数順</button>
+      <button class="sort-btn" id="sort-date" onclick="setSort('最終調理日')">最終調理日順</button>
     </div>
   </div>
 
@@ -99,8 +132,10 @@ button:not(.tabbar button, .chip, .sort-btn) {
 
   <div id="add" class="hidden">
     <div class="topbar"><h3>レシピ登録</h3><button onclick="saveRecipe()">保存</button></div>
+    <input id="sourceUrl" placeholder="ソース元URL" style="width:100%; padding:12px; margin-top:10px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd;">
     <input id="title" placeholder="タイトル" style="width:100%; padding:12px; margin-top:5px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd;">
-    <input id="group" placeholder="主菜など" style="width:100%; padding:12px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd; margin-top:5px;">
+    <input type="file" id="imageFile" style="margin: 10px 0;">
+    <input id="group" placeholder="主菜など" style="width:100%; padding:12px; box-sizing: border-box; border-radius: 10px; border:1px solid #ddd;">
     <h4>材料</h4>
     <div id="ingredientsArea"></div>
     <button onclick="addGroup()">材料グループ追加</button>
@@ -111,17 +146,22 @@ button:not(.tabbar button, .chip, .sort-btn) {
 
   <div id="stock" class="hidden">
     <div class="topbar"><h3>在庫メモ</h3></div>
-    <textarea id="stockMemo" oninput="saveStock()" placeholder="家にあるものをメモ..." style="width:100%; height:60vh; padding:15px; border-radius:12px; border:1px solid #ccc; font-size:16px; box-sizing:border-box;"></textarea>
+    <textarea id="stockMemo" oninput="saveStock()" placeholder="家にあるものを自由にメモ..." style="width:100%; height:60vh; padding:15px; border-radius:12px; border:1px solid #ccc; font-size:16px; box-sizing:border-box; line-height:1.6;"></textarea>
   </div>
 
   <div id="shopping" class="hidden">
     <div class="topbar"><h3>買い物リスト</h3><button onclick="clearShopping()" class="btn-red">クリア</button></div>
     <button onclick="alert('【在庫メモ】\n' + (localStorage.getItem('stockMemo') || 'メモは空です'))" style="width:100%; margin-bottom:10px; background:#f0f0f0; color:#333; font-size:13px; min-height:30px;">家にあるものを確認</button>
-    <div class="row"><input id="manualItem" placeholder="材料" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;"><button onclick="addManual()">追加</button></div>
+    <div class="row">
+      <input id="manualItem" placeholder="材料" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
+      <input id="manualAmount" placeholder="分量" style="width:80px; padding:12px; border-radius:10px; border:1px solid #ddd;">
+      <button onclick="addManual()">追加</button>
+    </div>
     <ul id="shopList" style="padding:0;"></ul>
   </div>
 </div>
 
+<div id="unitChips"></div>
 <div class="tabbar">
   <button onclick="show('list')">一覧</button>
   <button onclick="show('add')">登録</button>
@@ -133,9 +173,12 @@ button:not(.tabbar button, .chip, .sort-btn) {
 <script>
 let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
-let editIndex = null, formImage = null, openGroups = {}, currentFilter = 'all';
+let editIndex = null, formImage = null, openGroups = {}, currentFilter = 'all', currentSort = 'reg', activeAmountInput = null;
 let touchStartX = 0, currentX = 0;
 
+const units = ["大さじ", "小さじ", "g", "ml", "cm", "個", "本", "枚", "パック", "袋", "適量", "合", "片分"];
+
+/* --- 画面制御 --- */
 function show(p){
   const views = ["list", "detail", "add", "shopping", "stock", "filterArea", "listBar"];
   views.forEach(v => {
@@ -150,9 +193,31 @@ function show(p){
   window.scrollTo(0,0);
 }
 
+/* --- 画像圧縮 --- */
+document.getElementById("imageFile").addEventListener("change", function(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 500; const scaleSize = MAX_WIDTH / img.width;
+      canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      formImage = canvas.toDataURL('image/jpeg', 0.7);
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* --- 一覧描画 --- */
+function setFilter(m){ currentFilter=m; renderList(); document.getElementById("btnAll").classList.toggle("active", m==='all'); document.getElementById("btnFav").classList.toggle("active", m==='fav');}
+function setSort(s){ currentSort=s; document.querySelectorAll(".sort-btn").forEach(b=>b.classList.remove("active")); document.getElementById("sort-"+(s==='reg'?'reg':s==='調理回数'?'count':'date')).classList.add("active"); renderList(); }
+
 function renderList(){
-  const listDiv = document.getElementById("list");
-  listDiv.innerHTML = "";
+  const listDiv = document.getElementById("list"); listDiv.innerHTML = "";
   let key = toKatakana(document.getElementById("search").value.toLowerCase());
   let groups = {};
   recipes.forEach((r, i) => {
@@ -163,13 +228,20 @@ function renderList(){
     if(!groups[g]) groups[g] = [];
     groups[g].push({r, i});
   });
+
   Object.keys(groups).sort().forEach(gName => {
+    groups[gName].sort((a, b) => {
+      if(currentSort === '調理回数') return (b.r.count || 0) - (a.r.count || 0);
+      if(currentSort === '最終調理日') return (b.r.lastDate || "00/00/00").localeCompare(a.r.lastDate || "00/00/00");
+      return 0;
+    });
     let box = document.createElement("div");
     box.innerHTML = `<div class="groupTitle">${gName}</div>`;
     let wrap = document.createElement("div"); wrap.className = "grid";
     groups[gName].forEach(obj => {
+      let r = obj.r; let info = (currentSort === '最終調理日') ? (r.lastDate || "--") : `×${r.count || 0}`;
       let div = document.createElement("div"); div.className = "card";
-      div.innerHTML = `<img src="${obj.r.image || ''}"><div class="card-info"><div class="card-title">${obj.r.title}</div></div>`;
+      div.innerHTML = `<div class="fav-star ${r.favorite?'active':''}" onclick="toggleFavorite(event, ${obj.i})">★</div><img src="${r.image || ''}"><div class="card-info"><div class="card-title">${r.title}</div><div class="badge">${info}</div></div>`;
       div.onclick = () => detailView(obj.i);
       wrap.appendChild(div);
     });
@@ -177,68 +249,106 @@ function renderList(){
   });
 }
 
+/* --- 詳細画面（機能全復活・高速スワイプ付） --- */
 function detailView(i) {
-  let r = recipes[i];
-  const detailDiv = document.getElementById("detail");
-  detailDiv.style.transform = "translateX(0)";
-  detailDiv.style.transition = "none";
+  let r = recipes[i]; const detailDiv = document.getElementById("detail");
+  detailDiv.style.transform = "translateX(0)"; detailDiv.style.transition = "none";
   show('detail'); 
   
-  let html = `<div style="padding: 0 10px 120px;"><button onclick="show('list')">← 戻る</button><h2>${r.title}</h2>`;
+  let html = `<div style="padding: 0 10px 120px;"><button onclick="show('list')">← 戻る</button><h2 style="text-align:center;">${r.title}</h2><div style="display:flex; gap:10px; margin-bottom:15px;"><button style="flex:1;" onclick="toggleFavorite(null, ${i})">${r.favorite?'★ 解除':'☆ お気に入り'}</button><button style="flex:1;" class="btn-green" onclick="cookToday(${i})">今日作った！</button></div><div style="font-size:12px; color:#666; text-align:center; margin-bottom:15px;">調理回数: ${r.count||0} / 最終: ${r.lastDate||'なし'}</div>`;
+  if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
+  if(r.image) html += `<img src="${r.image}" class="detail-img">`;
   r.ingredients.forEach(g => {
     html += `<h3>${g.name}</h3>`;
-    g.items.forEach(it => {
-      html += `<label style="display:block; padding:10px 0; border-bottom:1px solid #eee;"><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}"> ${it.name} (${it.amount})</label>`;
-    });
+    g.items.forEach(it => html += `<label style="display:block; padding:10px 0; border-bottom:1px solid #eee;"><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}"> ${it.name} (${it.amount})</label>`);
   });
   html += `<h3>作り方</h3>`;
-  r.steps.forEach(s => html += `<p>${s}</p>`);
-  html += `<button style="width:100%;" onclick="addShopping()">買い物に追加</button><button class="btn-red" style="width:100%; margin-top:10px;" onclick="deleteRecipe(${i})">削除</button></div>`;
+  r.steps.forEach(s => html += `<p style="border-bottom:1px solid #eee; padding-bottom:8px;">${s}</p>`);
+  html += `<button style="width:100%; margin-top:20px;" onclick="addShopping()">買い物に追加</button><div style="display:flex; gap:10px; margin-top:15px;"><button style="flex:1;" onclick="editRecipe(${i})">編集</button><button style="flex:1;" class="btn-red" onclick="deleteRecipe(${i})">削除</button></div></div>`;
   detailDiv.innerHTML = html;
 
   detailDiv.ontouchstart = (e) => { if (e.touches[0].clientX > 60) return; touchStartX = e.touches[0].clientX; detailDiv.style.transition = "none"; };
-  detailDiv.ontouchmove = (e) => {
-    if (touchStartX === 0) return;
-    currentX = (e.touches[0].clientX - touchStartX) * 1.4;
-    if (currentX > 0) detailDiv.style.transform = `translateX(${currentX}px)`;
-  };
+  detailDiv.ontouchmove = (e) => { if (touchStartX === 0) return; currentX = (e.touches[0].clientX - touchStartX) * 1.4; if (currentX > 0) detailDiv.style.transform = `translateX(${currentX}px)`; };
   detailDiv.ontouchend = () => {
-    if (touchStartX === 0) return;
-    detailDiv.style.transition = "transform 0.2s ease-out";
+    if (touchStartX === 0) return; detailDiv.style.transition = "transform 0.2s ease-out";
     if (currentX > 80) { detailDiv.style.transform = "translateX(100%)"; setTimeout(() => show('list'), 200); }
     else { detailDiv.style.transform = "translateX(0)"; }
     touchStartX = 0; currentX = 0;
   };
 }
 
-function saveStock() { localStorage.setItem("stockMemo", document.getElementById("stockMemo").value); }
-function addManual(){
-  let n = document.getElementById("manualItem"); if(!n.value) return;
-  shopping.push({name: n.value, checked: false}); n.value = "";
-  localStorage.setItem("shopping", JSON.stringify(shopping)); renderShopping();
+function cookToday(i){
+  let d = new Date(); let ds = `${d.getFullYear().toString().slice(-2)}/${d.getMonth()+1}/${d.getDate()}`;
+  recipes[i].count = (recipes[i].count || 0) + 1; recipes[i].lastDate = ds;
+  localStorage.setItem("recipes", JSON.stringify(recipes)); detailView(i); showToast("記録しました");
 }
-function renderShopping(){
-  let list = document.getElementById("shopList"); list.innerHTML = "";
-  shopping.forEach((s, i) => {
-    let li = document.createElement("li"); li.className = "row"; li.style.background="#fff"; li.style.padding="10px"; li.style.borderRadius="10px";
-    li.innerHTML = `<input type="checkbox" ${s.checked?'checked':''} onchange="shopping[${i}].checked=!shopping[${i}].checked; localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();"><span style="flex:1;">${s.name}</span><button class="delBtn" onclick="shopping.splice(${i},1); localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();">×</button>`;
-    list.appendChild(li);
+
+function toggleFavorite(e, i){
+  if(e) e.stopPropagation(); recipes[i].favorite = !recipes[i].favorite;
+  localStorage.setItem("recipes", JSON.stringify(recipes));
+  if(!document.getElementById("detail").classList.contains("hidden")) detailView(i); else renderList();
+}
+
+/* --- 単位チップ --- */
+function setupChips() {
+  const area = document.getElementById("unitChips");
+  units.forEach(u => {
+    let span = document.createElement("span"); span.className = "chip"; span.textContent = u;
+    span.onmousedown = (e) => { e.preventDefault(); if(activeAmountInput) activeAmountInput.value += u; };
+    area.appendChild(span);
   });
 }
-function clearShopping(){ if(confirm("クリア？")){ shopping=[]; localStorage.setItem("shopping","[]"); renderShopping(); } }
-function toKatakana(str){ return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60)); }
-function exportData(){ let blob = new Blob([localStorage.getItem("recipes")], {type:"application/json"}); let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recipes.json"; a.click(); }
-function setFilter(m){ currentFilter=m; renderList(); document.getElementById("btnAll").classList.toggle("active", m==='all'); document.getElementById("btnFav").classList.toggle("active", m==='fav');}
+function showChips(input) { activeAmountInput = input; document.getElementById("unitChips").style.display = "flex"; }
+function hideChips() { setTimeout(() => { document.getElementById("unitChips").style.display = "none"; activeAmountInput = null; }, 200); }
 
-/* 登録用ヘルパー */
+/* --- 保存・編集 --- */
+function saveRecipe(){
+  let ing = [];
+  document.querySelectorAll("#ingredientsArea .groupBox").forEach(g => {
+    let items = [];
+    g.querySelectorAll(".items .row").forEach(row => {
+      let ins = row.querySelectorAll("input"); if(ins[0].value) items.push({name: ins[0].value, amount: ins[1].value});
+    });
+    ing.push({name: g.querySelector("input").value || "材料", items});
+  });
+  let steps = [];
+  document.querySelectorAll("#stepsArea textarea").forEach((t, i) => { if(t.value.trim()) steps.push((i+1) + ". " + t.value.trim()); });
+  let data = {
+    title: document.getElementById("title").value || "無題", group: document.getElementById("group").value || "未分類",
+    image: formImage, sourceUrl: document.getElementById("sourceUrl").value,
+    ingredients: ing, steps: steps,
+    favorite: editIndex !== null ? recipes[editIndex].favorite : false,
+    count: editIndex !== null ? recipes[editIndex].count : 0, lastDate: editIndex !== null ? recipes[editIndex].lastDate : null
+  };
+  if(editIndex !== null) recipes[editIndex] = data; else recipes.push(data);
+  localStorage.setItem("recipes", JSON.stringify(recipes)); clearForm(); show("list");
+}
+
+function editRecipe(i){
+  editIndex = i; let r = recipes[i]; formImage = r.image; show("add");
+  document.getElementById("title").value = r.title; document.getElementById("group").value = r.group;
+  document.getElementById("sourceUrl").value = r.sourceUrl || "";
+  document.getElementById("ingredientsArea").innerHTML = "";
+  r.ingredients.forEach(g => {
+    addGroup(); let gBox = document.getElementById("ingredientsArea").lastChild;
+    gBox.querySelector("input").value = g.name; let itemsDiv = gBox.querySelector(".items"); itemsDiv.innerHTML = "";
+    g.items.forEach(it => { addItem(itemsDiv); let row = itemsDiv.lastChild; row.querySelectorAll("input")[0].value = it.name; row.querySelectorAll("input")[1].value = it.amount; });
+  });
+  document.getElementById("stepsArea").innerHTML = "";
+  r.steps.forEach(s => { addStep(); document.getElementById("stepsArea").lastChild.querySelector("textarea").value = s.replace(/^\d+\.\s*/, ""); });
+}
+
+function deleteRecipe(i){ if(confirm("削除？")){ recipes.splice(i,1); localStorage.setItem("recipes", JSON.stringify(recipes)); show("list"); } }
+
+/* --- 入力補助 --- */
 function addGroup(){
   let div = document.createElement("div"); div.className = "groupBox";
-  div.innerHTML = `<div class="row"><input placeholder="グループ名" style="flex:1;"><button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button></div><div class="items"></div><button onclick="addItem(this.previousElementSibling)" style="margin-top:5px; height:35px; font-size:12px;">+ 追加</button>`;
+  div.innerHTML = `<div class="row"><input placeholder="グループ名" style="flex:1;"><button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button></div><div class="items"></div><button onclick="addItem(this.previousElementSibling)" style="margin-top:5px; height:35px; font-size:12px;">+ 材料追加</button>`;
   document.getElementById("ingredientsArea").appendChild(div); addItem(div.querySelector(".items"));
 }
 function addItem(c){
   let r = document.createElement("div"); r.className = "row";
-  r.innerHTML = `<input placeholder="材料" style="flex:1;"><input placeholder="分量" style="width:70px;"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
+  r.innerHTML = `<input placeholder="材料" style="flex:1;"><input placeholder="分量" style="width:70px;" onfocus="showChips(this)" onblur="hideChips()"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
   c.appendChild(r);
 }
 function addStep(){
@@ -247,7 +357,34 @@ function addStep(){
   document.getElementById("stepsArea").appendChild(d);
 }
 
-show('list');
+/* --- 在庫・買い物 --- */
+function saveStock() { localStorage.setItem("stockMemo", document.getElementById("stockMemo").value); }
+function addShopping(){
+  document.querySelectorAll("#detail input:checked").forEach(c => { shopping.push({name: c.dataset.name, amount: c.dataset.amount, checked: false}); });
+  localStorage.setItem("shopping", JSON.stringify(shopping)); showToast("追加しました");
+}
+function addManual(){
+  let n = document.getElementById("manualItem"), a = document.getElementById("manualAmount"); if(!n.value) return;
+  shopping.push({name: n.value, amount: a.value, checked: false}); n.value = ""; a.value = "";
+  localStorage.setItem("shopping", JSON.stringify(shopping)); renderShopping();
+}
+function renderShopping(){
+  let list = document.getElementById("shopList"); list.innerHTML = "";
+  shopping.forEach((s, i) => {
+    let li = document.createElement("li"); li.className = "row"; li.style.background="#fff"; li.style.padding="10px"; li.style.borderRadius="12px";
+    li.innerHTML = `<input type="checkbox" ${s.checked?'checked':''} onchange="shopping[${i}].checked=!shopping[${i}].checked; localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();"><span style="flex:1; ${s.checked?'text-decoration:line-through; opacity:0.5':''}">${s.name} (${s.amount})</span><button class="delBtn" onclick="shopping.splice(${i},1); localStorage.setItem('shopping', JSON.stringify(shopping)); renderShopping();">×</button>`;
+    list.appendChild(li);
+  });
+}
+function clearShopping(){ if(confirm("クリア？")){ shopping=[]; localStorage.setItem("shopping","[]"); renderShopping(); } }
+
+function clearForm(){ document.getElementById("title").value = ""; document.getElementById("group").value = ""; document.getElementById("sourceUrl").value = ""; document.getElementById("imageFile").value = ""; document.getElementById("ingredientsArea").innerHTML = ""; document.getElementById("stepsArea").innerHTML = ""; formImage = null; editIndex = null; }
+function toKatakana(str){ return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60)); }
+function showToast(m){ let t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2000); }
+function exportData(){ let blob = new Blob([localStorage.getItem("recipes")], {type:"application/json"}); let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recipes.json"; a.click(); }
+function importData(f){ let r = new FileReader(); r.onload = e => { localStorage.setItem("recipes", e.target.result); recipes = JSON.parse(e.target.result); renderList(); showToast("復元しました"); }; r.readAsText(f); }
+
+setupChips(); show('list');
 </script>
 </body>
 </html>
