@@ -192,7 +192,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.07
+ v1.08
 
  
 
@@ -284,17 +284,37 @@ function show(p){
  if(p==="shopping"){ shoppingDiv.classList.remove("hidden"); renderShopping(); }
 }
 
-/* 一覧（グループ並列修正） */
- document.getElementById("imageFile").addEventListener("change", function(e){
+/* --- 画像選択・圧縮処理 --- */
+document.getElementById("imageFile").addEventListener("change", function(e){
   const file = e.target.files[0];
-  if(!file) return;
+  if(!file) {
+    formImage = null;
+    return;
+  }
 
   const reader = new FileReader();
   reader.onload = function(evt){
-    formImage = evt.target.result; // ★ここでbase64保存
+    const img = new Image();
+    img.onload = function() {
+      // キャンバスを作成して画像をリサイズ（スマホ写真対策）
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 500; // 横幅を500pxに制限（これだけで劇的に軽くなります）
+      const scaleSize = MAX_WIDTH / img.width;
+      canvas.width = MAX_WIDTH;
+      canvas.height = img.height * scaleSize;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // 画質を0.7(70%)に落としてBase64形式で保存
+      formImage = canvas.toDataURL('image/jpeg', 0.7);
+      console.log("画像の圧縮と読み込みが完了しました");
+    };
+    img.src = evt.target.result;
   };
   reader.readAsDataURL(file);
 });
+ 
 function renderList(){
  list.innerHTML="";
  let key = toKatakana(search.value.toLowerCase());
