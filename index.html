@@ -192,7 +192,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.04
+ v1.05
 
  
 
@@ -453,69 +453,85 @@ function clearShopping(){
 
 /* 登録（画像修正） */
 function saveRecipe(){
+  console.log("① saveRecipe開始");
 
- let groupInput = document.getElementById("group"); // ← 追加（重要）
+  let file = document.getElementById("imageFile").files[0];
 
- let file = document.getElementById("imageFile").files[0];
+  function finish(img){
+    console.log("③ finish開始", img ? "画像あり" : "画像なし");
 
- function finish(img){
+    try {
 
-  let ing=[];
-  ingredientsArea.querySelectorAll(".groupBox").forEach(g=>{
-   let items=[];
-   g.querySelectorAll(".row").forEach(d=>{
-    let i=d.querySelectorAll("input");
-    items.push({name:i[0].value,amount:i[1].value});
-   });
-   ing.push({name:g.querySelector("input").value,items});
-  });
+      let ing=[];
+      ingredientsArea.querySelectorAll(".groupBox").forEach(g=>{
+        let items=[];
+        g.querySelectorAll(".row").forEach(d=>{
+          let i=d.querySelectorAll("input");
+          items.push({name:i[0].value,amount:i[1].value});
+        });
+        ing.push({name:g.querySelector("input").value,items});
+      });
 
-  let steps=[];
-  stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
-   steps.push((i+1)+". "+t.value);
-  });
+      let steps=[];
+      stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
+        steps.push((i+1)+". "+t.value);
+      });
 
-let data={
- group: groupInput.value.trim() || "未分類",
- title: document.getElementById("title").value,
- image: (img !== null && img !== undefined) ? img : currentImage,
- sourceUrl: document.getElementById("sourceUrl").value,
- ingredients: ing,
- steps
-};
+      let data={
+        group: group.value,
+        title: title.value,
+        image: img,
+        sourceUrl: sourceUrl.value,
+        ingredients: ing,
+        steps
+      };
 
-  if(editIndex!==null){
-   recipes[editIndex]=data;
-   editIndex=null;
-  } else {
-   recipes.push(data);
+      console.log("④ データ作成OK", data);
+
+      recipes.push(data);
+
+      console.log("⑤ 保存前サイズ", JSON.stringify(recipes).length);
+
+      localStorage.setItem("recipes", JSON.stringify(recipes));
+
+      console.log("⑤ 保存後確認", localStorage.getItem("recipes") ? "OK" : "NG");
+
+      console.log("⑥ UI更新開始");
+
+      clearForm();
+      show("list");
+      renderList();
+      showToast("保存しました");
+
+      console.log("⑥ 完了");
+
+    } catch(e){
+      console.error("❌ finishエラー", e);
+    }
   }
 
-  localStorage.setItem("recipes",JSON.stringify(recipes));
+  if(file){
+    console.log("② 画像あり", file.size);
 
-  clearForm();
-  show("list");
-  renderList();
-  showToast("保存しました");
- }
+    let reader = new FileReader();
 
- if(file){
- let reader = new FileReader();
+    reader.onload = function(e){
+      console.log("② reader.onload成功", e.target.result.length);
+      finish(e.target.result);
+    };
 
- reader.onload = function(e){
-  finish(e.target.result);
- };
+    reader.onerror = function(){
+      console.error("❌ readerエラー");
+    };
 
- reader.onerror = function(){
-  alert("画像の読み込みに失敗しました");
- };
+    reader.readAsDataURL(file);
 
- reader.readAsDataURL(file);
-
-}else{
- finish(currentImage);
+  } else {
+    console.log("② 画像なし");
+    finish(null);
+  }
 }
-}
+ 
 /* 編集 */
 function editRecipe(i){
  let r=recipes[i];
