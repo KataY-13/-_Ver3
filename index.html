@@ -192,7 +192,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.06
+ v1.07
 
  
 
@@ -285,6 +285,16 @@ function show(p){
 }
 
 /* 一覧（グループ並列修正） */
+ document.getElementById("imageFile").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    formImage = evt.target.result; // ★ここでbase64保存
+  };
+  reader.readAsDataURL(file);
+});
 function renderList(){
  list.innerHTML="";
  let key = toKatakana(search.value.toLowerCase());
