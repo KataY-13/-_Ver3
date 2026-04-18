@@ -159,7 +159,6 @@ function updateUI() {
 // メインスワイプ処理（縦揺れ防止・競合対策）
 wrapper.ontouchstart = e => { startX = e.touches[0].pageX; startY = e.touches[0].pageY; moveX = 0; isScrolling = false; isHorizontal = false; wrapper.style.transition = 'none'; };
 wrapper.ontouchmove = e => {
-  wrapper.ontouchmove = e => {
   // --- ここからテスト用コード ---
   if (!this.debugConfirmed) {
     this.debugConfirmed = true; // 何度も出ないようにロック
@@ -170,9 +169,6 @@ wrapper.ontouchmove = e => {
     }
   }
   // --- ここまでテスト用コード ---
-
-  let dx = e.touches[0].pageX - startX;
-  // ...（以下、既存のコード）
   let dx = e.touches[0].pageX - startX;
   let dy = e.touches[0].pageY - startY;
   
