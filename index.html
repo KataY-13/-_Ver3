@@ -1,5 +1,4 @@
-
-<!DOCTYPE html>
+　<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -228,14 +227,9 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.09
-
- 
-
-
- 
-
+ v1.10
 </div>
+
 <div class="topbar" id="listBar">
   <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
   
@@ -246,6 +240,7 @@ input, textarea {
     <input type="file" onchange="importData(this.files[0])" style="display:none;">
   </label>
 </div>
+
 <div id="filterArea" class="filter-bar">
   <button id="btnAll" class="filter-btn active" onclick="setFilter('all')">すべて</button>
   <button id="btnFav" class="filter-btn" onclick="setFilter('fav')">お気に入り★</button>
@@ -275,7 +270,6 @@ input, textarea {
 <h4>作り方</h4>
 <div id="stepsArea"></div>
 <button onclick="addStep()">工程追加</button>
-
 </div>
 
 <div id="shopping" class="hidden">
@@ -283,12 +277,19 @@ input, textarea {
 <h3>買い物リスト</h3>
 <button onclick="clearShopping()">クリア</button>
 </div>
-
 <input id="manualItem" placeholder="材料">
 <input id="manualAmount" placeholder="分量">
 <button onclick="addManual()">追加</button>
-
 <ul id="shopList"></ul>
+</div>
+
+<div id="stock" class="hidden">
+<div class="topbar">
+<h3>在庫リスト</h3>
+</div>
+<input id="stockItem" placeholder="在庫アイテム名">
+<button onclick="addStock()">追加</button>
+<ul id="stockList" style="margin-top:10px; padding:0;"></ul>
 </div>
 
 </div>
@@ -297,27 +298,28 @@ input, textarea {
 <button onclick="show('list')">一覧</button>
 <button onclick="show('add')">登録</button>
 <button onclick="show('shopping')">買い物</button>
+<button onclick="show('stock')">在庫</button>
 </div>
 
 <script>
 let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
+let stock = JSON.parse(localStorage.getItem("stockItems")||"[]"); // 在庫データ
 
 let editIndex=null;
 let currentImage = null;
 let formImage = null;
 let openGroups={};
-let currentFilter = 'all'; // 追加
+let currentFilter = 'all';
 
-/* 画面 */
- /* 画面切り替えの修正 */
+/* 画面切り替え */
 function show(p){
   list.classList.add("hidden");
   detail.classList.add("hidden");
   add.classList.add("hidden");
   document.getElementById("shopping").classList.add("hidden");
+  document.getElementById("stock").classList.add("hidden"); // 在庫を隠す
 
-  // 一覧の時だけ検索バーとお気に入りボタンを出す
   document.getElementById("listBar").style.display = (p==="list") ? "flex" : "none";
   document.getElementById("filterArea").style.display = (p==="list") ? "flex" : "none";
 
@@ -327,9 +329,13 @@ function show(p){
     document.getElementById("shopping").classList.remove("hidden"); 
     renderShopping(); 
   }
+  if(p==="stock"){ 
+    document.getElementById("stock").classList.remove("hidden"); 
+    renderStock(); 
+  }
 }
 
-/* お気に入りフィルタのセット */
+/* お気に入りフィルタ */
 function setFilter(mode) {
   currentFilter = mode;
   document.getElementById("btnAll").classList.toggle("active", mode === 'all');
@@ -337,61 +343,51 @@ function setFilter(mode) {
   renderList();
 }
 
-/* 星をクリックした時の処理 */
+/* お気に入り切り替え */
 function toggleFavorite(e, index) {
-  e.stopPropagation(); // 詳細画面が開かないようにする
+  e.stopPropagation();
   recipes[index].favorite = !recipes[index].favorite;
   localStorage.setItem("recipes", JSON.stringify(recipes));
   renderList();
 }
 
-/* --- 画像選択・圧縮処理 --- */
+/* 画像処理 */
 document.getElementById("imageFile").addEventListener("change", function(e){
   const file = e.target.files[0];
   if(!file) {
     formImage = null;
     return;
   }
-
   const reader = new FileReader();
   reader.onload = function(evt){
     const img = new Image();
     img.onload = function() {
-      // キャンバスを作成して画像をリサイズ（スマホ写真対策）
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 500; // 横幅を500pxに制限（これだけで劇的に軽くなります）
+      const MAX_WIDTH = 500;
       const scaleSize = MAX_WIDTH / img.width;
       canvas.width = MAX_WIDTH;
       canvas.height = img.height * scaleSize;
-
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // 画質を0.7(70%)に落としてBase64形式で保存
       formImage = canvas.toDataURL('image/jpeg', 0.7);
-      console.log("画像の圧縮と読み込みが完了しました");
     };
     img.src = evt.target.result;
   };
   reader.readAsDataURL(file);
 });
- 
+
 function renderList(){
   list.innerHTML="";
   let key = toKatakana(search.value.toLowerCase());
   let groups={};
-
   recipes.forEach((r,i)=>{
-    // 検索・お気に入りフィルタ
     let hit = toKatakana(r.title.toLowerCase()).includes(key);
     if(currentFilter === 'fav' && !r.favorite) hit = false;
     if(!hit) return;
-
     let g = (r.group || "").trim() || "未分類";
     if(!groups[g]) groups[g]=[];
     groups[g].push({r,i});
   });
-
   Object.keys(groups).sort().forEach(g=>{
     if(openGroups[g] === undefined) openGroups[g] = true;
     let box = document.createElement("div");
@@ -400,7 +396,6 @@ function renderList(){
     title.textContent=g;
     title.onclick=()=>{ openGroups[g]=!openGroups[g]; renderList(); };
     box.appendChild(title);
-
     if(openGroups[g]){
       let wrap=document.createElement("div");
       wrap.className="grid";
@@ -408,7 +403,6 @@ function renderList(){
         let r=obj.r;
         let div=document.createElement("div");
         div.className="card";
-        // ★ 星マークを表示
         div.innerHTML = `
           <div class="fav-star ${r.favorite ? 'active' : ''}" onclick="toggleFavorite(event, ${obj.i})">★</div>
           <img src="${r.image||''}">
@@ -423,64 +417,39 @@ function renderList(){
   });
 }
 
-/* 詳細（ボタン復活） */
 function detailView(i){
  let r=recipes[i];
  document.getElementById("listBar").style.display = "none";
-
- let html = `
-<div class="topbar">
-  <div style="flex:1; text-align:center; font-weight:bold;">
-    ${r.title}
-  </div>
-</div>
-`;
+ let html = `<div class="topbar"><div style="flex:1; text-align:center; font-weight:bold;">${r.title}</div></div>`;
  detail.classList.remove("hidden");
  list.classList.add("hidden");
-
- if(r.sourceUrl){
- html += `
- <a href="${r.sourceUrl}" target="_blank" class="linkBtn">
-  レシピ元を見る
- </a>`;
-}
+ if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
  if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
-
  r.ingredients.forEach(g=>{
   html+=`<h3>${g.name}</h3>`;
   g.items.forEach(it=>{
-   html+=`<label><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">
-   ${it.name} (${it.amount})</label><br>`;
+   html+=`<label><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">${it.name} (${it.amount})</label><br>`;
   });
  });
-
  html+=`<h3>作り方</h3>`;
  r.steps.forEach(s=> html+=s+"<br>");
-
  html+=`<button onclick="addShopping()">買い物リストへ追加</button>`;
  html+=`<button onclick="editRecipe(${i})">編集</button>`;
  html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
-
  detail.innerHTML=html;
 }
 
-/* 買い物 */
 function addShopping(){
  let count=0;
-
  document.querySelectorAll("#detail input:checked").forEach(c=>{
   shopping.push({name:c.dataset.name,amount:c.dataset.amount,checked:false});
   count++;
  });
-
  localStorage.setItem("shopping",JSON.stringify(shopping));
  renderShopping();
-
- if(count>0){
-  showToast("買い物リストに追加しました");
- }
+ if(count>0) showToast("買い物リストに追加しました");
 }
- 
+
 function addManual(){
  shopping.push({name:manualItem.value,amount:manualAmount.value,checked:false});
  manualItem.value="";
@@ -492,16 +461,10 @@ function addManual(){
 function renderShopping(){
  shopList.innerHTML="";
  shopping.sort((a,b)=>a.checked - b.checked);
-
  shopping.forEach((s,i)=>{
   let li=document.createElement("li");
   li.className=s.checked?"gray":"";
-
-  li.innerHTML=`
-   <input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">
-   ${s.name} (${s.amount})
-   <button onclick="removeItem(${i})">×</button>
-  `;
+  li.innerHTML=`<input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">${s.name} (${s.amount})<button onclick="removeItem(${i})" style="margin-left:auto;">×</button>`;
   shopList.appendChild(li);
  });
 }
@@ -524,11 +487,33 @@ function clearShopping(){
  renderShopping();
 }
 
-/* 登録（画像修正） */
+/* 在庫管理用関数 */
+function addStock(){
+ if(!stockItem.value) return;
+ stock.push(stockItem.value);
+ stockItem.value="";
+ localStorage.setItem("stockItems", JSON.stringify(stock));
+ renderStock();
+}
+
+function renderStock(){
+ let sl = document.getElementById("stockList");
+ sl.innerHTML = "";
+ stock.forEach((item, i) => {
+  let li = document.createElement("li");
+  li.innerHTML = `<span>${item}</span><button onclick="removeStock(${i})" style="margin-left:auto;">×</button>`;
+  sl.appendChild(li);
+ });
+}
+
+function removeStock(i){
+ stock.splice(i,1);
+ localStorage.setItem("stockItems", JSON.stringify(stock));
+ renderStock();
+}
+
 function saveRecipe(){
-
   function finish(){
-
     let ing=[];
     ingredientsArea.querySelectorAll(".groupBox").forEach(g=>{
       let items=[];
@@ -538,61 +523,49 @@ function saveRecipe(){
       });
       ing.push({name:g.querySelector("input").value,items});
     });
-
     let steps=[];
     stepsArea.querySelectorAll("textarea").forEach((t,i)=>{
       steps.push((i+1)+". "+t.value);
     });
-
     let data={
       group: group.value,
       title: title.value,
-      image: formImage,   // ★ここだけ使う
+      image: formImage,
       sourceUrl: sourceUrl.value,
       ingredients: ing,
-      steps
+      steps,
+      favorite: editIndex !== null ? recipes[editIndex].favorite : false
     };
-
     if(editIndex !== null){
-  recipes[editIndex] = data;
-  editIndex = null;
-} else {
-  recipes.push(data);
-}
+      recipes[editIndex] = data;
+      editIndex = null;
+    } else {
+      recipes.push(data);
+    }
     localStorage.setItem("recipes", JSON.stringify(recipes));
-
     clearForm();
     show("list");
     renderList();
     showToast("保存しました");
   }
-
   finish();
 }
- 
-/* 編集 */
+
 function editRecipe(i){
  let r=recipes[i];
  editIndex=i;
  formImage = r.image;
-
  show("add");
-
  title.value=r.title;
  group.value=r.group;
  sourceUrl.value = r.sourceUrl || "";
-
- // 材料
  ingredientsArea.innerHTML="";
  r.ingredients.forEach(g=>{
   addGroup();
   let gBox = ingredientsArea.lastChild;
-
   gBox.querySelector("input").value = g.name;
-
   let itemsDiv = gBox.querySelector(".items");
   itemsDiv.innerHTML="";
-
   g.items.forEach(it=>{
    addItem(itemsDiv);
    let row = itemsDiv.lastChild;
@@ -601,19 +574,15 @@ function editRecipe(i){
    inputs[1].value = it.amount;
   });
  });
-
- // 工程
  stepsArea.innerHTML="";
  r.steps.forEach(s=>{
   addStep();
   let t = stepsArea.lastChild.querySelector("textarea");
   t.value = s.replace(/^\d+\.\s*/, "");
  });
-
  updateStepNumbers();
 }
- 
-/* 削除 */
+
 function deleteRecipe(i){
  if(!confirm("このレシピを削除しますか？")) return;
  recipes.splice(i,1);
@@ -621,37 +590,20 @@ function deleteRecipe(i){
  show("list");
  renderList();
 }
-/* 入力 */
+
 function addGroup(){
  let div=document.createElement("div");
  div.className="groupBox";
- div.innerHTML=`
-  <div style="display:flex; align-items:center; gap:5px;">
-    <input placeholder="グループ名" style="flex:1;">
-    <button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button>
-  </div>
-  <div class="items"></div>
-  <button onclick="addItem(this)">材料追加</button>
- `;
+ div.innerHTML=`<div style="display:flex; align-items:center; gap:5px;"><input placeholder="グループ名" style="flex:1;"><button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button></div><div class="items"></div><button onclick="addItem(this)">材料追加</button>`;
  ingredientsArea.appendChild(div);
- // 最初に1行入れる
  addItem(div.querySelector(".items"));
 }
 
 function addItem(container){
-
- // ボタンから押された場合の対応
- if(container.tagName === "BUTTON"){
-  container = container.previousElementSibling;
- }
-
+ if(container.tagName === "BUTTON") container = container.previousElementSibling;
  let row=document.createElement("div");
  row.className="row";
- row.innerHTML=`
-  <input placeholder="材料">
-  <input placeholder="分量">
-  <button class="delBtn" onclick="this.parentNode.remove()">×</button>
- `;
+ row.innerHTML=`<input placeholder="材料"><input placeholder="分量"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
  container.appendChild(row);
 }
 
@@ -682,16 +634,14 @@ function clearForm(){
 }
 
 renderList();
- function showToast(msg){
+
+function showToast(msg){
  let t=document.getElementById("toast");
  t.textContent=msg;
  t.classList.add("show");
-
- setTimeout(()=>{
-  t.classList.remove("show");
- },1500);
+ setTimeout(()=>{ t.classList.remove("show"); },1500);
 }
- /* ===== バックアップ ===== */
+
 function exportData(){
  let data = localStorage.getItem("recipes") || "[]";
  let blob = new Blob([data], {type:"application/json"});
@@ -701,10 +651,8 @@ function exportData(){
  a.click();
 }
 
-/* ===== 復元 ===== */
 function importData(file){
  if(!file) return;
-
  let reader = new FileReader();
  reader.onload = e => {
   localStorage.setItem("recipes", e.target.result);
@@ -714,14 +662,11 @@ function importData(file){
  };
  reader.readAsText(file);
 }
- /* ひらがな→カタカナ */
+
 function toKatakana(str){
- return str.replace(/[\u3041-\u3096]/g, ch =>
-  String.fromCharCode(ch.charCodeAt(0) + 0x60)
- );
+ return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
 }
 </script>
-<div id="toast">
-</div>
+<div id="toast"></div>
 </body>
 </html>
