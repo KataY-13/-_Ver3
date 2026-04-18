@@ -187,35 +187,18 @@ input, textarea {
 /* 星マークのスタイル */
 .fav-star {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  font-size: 26px;
+  top: 5px;
+  right: 5px;
+  font-size: 24px;
+  color: #ccc; /* 通常はグレー */
   cursor: pointer;
+  text-shadow: 0 0 3px #fff;
   z-index: 10;
-  /* 未チェック：黒色 */
-  color: #000;
-  -webkit-text-stroke: 0px transparent;
 }
 
+/* お気に入り登録時の色 */
 .fav-star.active {
-  /* チェックあり：黄色で黒の縁取り */
-  color: #ffcc00;
-  text-shadow: 
-    -1px -1px 0 #000,  
-     1px -1px 0 #000,
-    -1px  1px 0 #000,
-     1px  1px 0 #000;
-}
-
-/* 詳細画面用の星ボタン */
-.detail-fav-btn {
-  font-size: 20px;
-  margin-top: 10px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  color: #ffcc00; /* お気に入りは金色 */
 }
 
 /* 切り替えボタンのスタイル */
@@ -245,7 +228,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- v1.01
+ v1.09
 
  
 
@@ -328,13 +311,13 @@ let currentFilter = 'all'; // 追加
 
 /* 画面 */
  /* 画面切り替えの修正 */
- function show(p){
+function show(p){
   list.classList.add("hidden");
   detail.classList.add("hidden");
   add.classList.add("hidden");
   document.getElementById("shopping").classList.add("hidden");
 
-  // 一覧の時だけ検索バーとお気に入りフィルタを表示
+  // 一覧の時だけ検索バーとお気に入りボタンを出す
   document.getElementById("listBar").style.display = (p==="list") ? "flex" : "none";
   document.getElementById("filterArea").style.display = (p==="list") ? "flex" : "none";
 
@@ -346,7 +329,6 @@ let currentFilter = 'all'; // 追加
   }
 }
 
-
 /* お気に入りフィルタのセット */
 function setFilter(mode) {
   currentFilter = mode;
@@ -357,17 +339,10 @@ function setFilter(mode) {
 
 /* 星をクリックした時の処理 */
 function toggleFavorite(e, index) {
-  if(e) e.stopPropagation(); // 一覧でのカードクリック防止
+  e.stopPropagation(); // 詳細画面が開かないようにする
   recipes[index].favorite = !recipes[index].favorite;
   localStorage.setItem("recipes", JSON.stringify(recipes));
-  
-  // 一覧に戻った時のために再描画
   renderList();
-  
-  // 詳細画面を開いている最中なら詳細画面も更新する
-  if (!detail.classList.contains("hidden")) {
-    detailView(index);
-  }
 }
 
 /* --- 画像選択・圧縮処理 --- */
@@ -450,51 +425,43 @@ function renderList(){
 
 /* 詳細（ボタン復活） */
 function detailView(i){
-  let r=recipes[i];
-  document.getElementById("listBar").style.display = "none";
-  document.getElementById("filterArea").style.display = "none"; // 念のため隠す
+ let r=recipes[i];
+ document.getElementById("listBar").style.display = "none";
 
-  let html = `
+ let html = `
 <div class="topbar">
   <div style="flex:1; text-align:center; font-weight:bold;">
     ${r.title}
   </div>
 </div>
 `;
-  detail.classList.remove("hidden");
-  list.classList.add("hidden");
+ detail.classList.remove("hidden");
+ list.classList.add("hidden");
 
-  if(r.sourceUrl){
-    html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
-  }
-  
-  if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
+ if(r.sourceUrl){
+ html += `
+ <a href="${r.sourceUrl}" target="_blank" class="linkBtn">
+  レシピ元を見る
+ </a>`;
+}
+ if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
 
-  // --- お気に入りボタン追加 ---
-  const favText = r.favorite ? "お気に入り解除" : "お気に入り登録";
-  const favClass = r.favorite ? "active" : "";
-  html += `
-    <button class="detail-fav-btn" onclick="toggleFavorite(null, ${i})">
-      <span class="fav-star ${favClass}" style="position:static;">★</span> ${favText}
-    </button>
-  `;
-
-  r.ingredients.forEach(g=>{
-    html+=`<h3>${g.name}</h3>`;
-    g.items.forEach(it=>{
-      html+=`<label><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">
-      ${it.name} (${it.amount})</label><br>`;
-    });
+ r.ingredients.forEach(g=>{
+  html+=`<h3>${g.name}</h3>`;
+  g.items.forEach(it=>{
+   html+=`<label><input type="checkbox" data-name="${it.name}" data-amount="${it.amount}">
+   ${it.name} (${it.amount})</label><br>`;
   });
+ });
 
-  html+=`<h3>作り方</h3>`;
-  r.steps.forEach(s=> html+=s+"<br>");
+ html+=`<h3>作り方</h3>`;
+ r.steps.forEach(s=> html+=s+"<br>");
 
-  html+=`<button onclick="addShopping()">買い物リストへ追加</button>`;
-  html+=`<button onclick="editRecipe(${i})">編集</button>`;
-  html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
+ html+=`<button onclick="addShopping()">買い物リストへ追加</button>`;
+ html+=`<button onclick="editRecipe(${i})">編集</button>`;
+ html+=`<button onclick="deleteRecipe(${i})">削除</button>`;
 
-  detail.innerHTML=html;
+ detail.innerHTML=html;
 }
 
 /* 買い物 */
