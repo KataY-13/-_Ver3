@@ -2,37 +2,37 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>レシピアプリ v3.5</title>
+<title>レシピアプリ v3.6</title>
 
 <style>
 body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; height: 100vh; }
 
 /* ページ遷移 */
-.main-wrapper { display: flex; width: 400%; height: calc(100% - 90px); transition: transform 0.3s ease-out; }
+.main-wrapper { display: flex; width: 400%; height: calc(100% - 90px); transition: transform 0.3s ease-out; position: relative; z-index: 1; }
 .page { width: 25%; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 10px 10px 60px; position: relative; }
 
 /* タブバー */
-.tabbar { position:fixed; bottom:0; width:100%; display:flex; background:#fff; border-top:1px solid #ccc; z-index: 1000; height: 90px; }
+.tabbar { position:fixed; bottom:0; width:100%; display:flex; background:#fff; border-top:1px solid #ccc; z-index: 2000; height: 90px; }
 .tabbar button { flex:1; font-size:18px; border:none; background:none; color: #555; }
 .tabbar button.active { color: #007aff; font-weight: bold; }
 
-/* 並べ替え・フィルタボタン */
-.btn-toggle { background: #eee; color: #555; border-radius: 8px; border: none; padding: 8px; font-size: 13px; flex: 1; min-height: 40px; }
+/* 並べ替え・フィルタボタン（スタイル維持） */
+.btn-toggle { background: #eee; color: #555; border-radius: 8px; border: none; padding: 8px; font-size: 13px; flex: 1; min-height: 40px; position: relative; z-index: 10; }
 .btn-toggle.active { background: #007aff !important; color: #fff !important; font-weight: bold; }
 
-/* カード表示 */
+/* カード表示（重なり順を修正） */
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); position: relative; height: 150px; }
+.card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); position: relative; height: 150px; z-index: 10; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .card img { width:100%; height:80px; object-fit:cover; pointer-events: none; }
 .card-info { padding: 4px; pointer-events: none; }
 .card-title { font-size:11px; font-weight: bold; line-height: 1.2; height: 2.4em; overflow: hidden; }
 .badge { font-size: 10px; color: #007aff; background: #e5f0ff; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: bold; }
 
 /* お気に入り */
-.fav-star { position: absolute; top: 0; right: 0; font-size: 24px; z-index: 50; color: #fff; text-shadow: 0 0 3px rgba(0,0,0,0.5); padding: 8px; }
+.fav-star { position: absolute; top: 0; right: 0; font-size: 24px; z-index: 20; color: #fff; text-shadow: 0 0 3px rgba(0,0,0,0.5); padding: 8px; }
 .fav-star.active { color: #ffcc00; }
 
-/* 上下移動ボタン（中央より少し下） */
+/* 上下移動ボタン（配置修正） */
 .scroll-btn {
  position: fixed; right: 20px; width: 55px; height: 55px;
  background: rgba(0,0,0,0.7); color: #fff; border-radius: 50%;
@@ -41,17 +41,17 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
 #scrollTop { bottom: 38%; }
 #scrollBottom { bottom: 30%; }
 
-/* リスト行（買い物・在庫・詳細の材料） */
-.list-row { display:flex; gap:8px; align-items: center; background:#fff; padding:12px; border-radius:12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); position: relative; }
-.list-label { flex:1; display:flex; align-items:center; gap:10px; cursor: pointer; }
-.list-row input[type="checkbox"] { width: 24px; height: 24px; flex-shrink: 0; pointer-events: none; } /* ラベル側で制御するため */
+/* リスト行 */
+.list-row { display:flex; gap:8px; align-items: center; background:#fff; padding:12px; border-radius:12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+.list-label { flex:1; display:flex; align-items:center; gap:10px; pointer-events: none; } /* 行タップで反応させるため */
+.list-row input[type="checkbox"] { width: 24px; height: 24px; flex-shrink: 0; pointer-events: none; }
 
 .btn-red { background: #ffe5e5 !important; color: #ff3b30 !important; }
 .btn-green { background: #e5f7e5 !important; color: #34c759 !important; }
-.delBtn { width: 34px; height: 34px; background: #eee !important; color: #ff3b30 !important; border-radius: 50% !important; border:none; font-size: 20px; z-index: 10; }
+.delBtn { width: 34px; height: 34px; background: #eee !important; color: #ff3b30 !important; border-radius: 50% !important; border:none; font-size: 20px; z-index: 30; position: relative; }
 
-#detail { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 90px); background: #f2f2f7; overflow-y: auto; z-index: 800; transition: transform 0.3s ease-out; transform: translateX(100%); padding: 15px; box-sizing: border-box; }
-#toast { position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:12px 20px; border-radius:20px; font-size:14px; opacity:0; transition:0.3s; pointer-events:none; z-index:2000; }
+#detail { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 90px); background: #f2f2f7; overflow-y: auto; z-index: 3000; transition: transform 0.3s ease-out; transform: translateX(100%); padding: 15px; box-sizing: border-box; }
+#toast { position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:12px 20px; border-radius:20px; font-size:14px; opacity:0; transition:0.3s; pointer-events:none; z-index:4000; }
 #toast.show { opacity:1; }
 .groupTitle { background:#e5e5ea; padding:8px 12px; margin:15px 0 5px; font-weight:bold; border-radius:8px; font-size:14px; }
 .row { display:flex; gap:8px; margin-top:5px; align-items: center; }
@@ -62,24 +62,21 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
 
 <div class="main-wrapper" id="mainWrapper">
   <div class="page" id="page-list">
-    <div style="font-size:11px; color:#aaa; text-align:right;">v3.5</div>
+    <div style="font-size:11px; color:#aaa; text-align:right;">v3.6</div>
     <div class="row">
       <input id="search" placeholder="検索" oninput="renderList()" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd; font-size: 16px;">
       <button onclick="exportData()">保存</button>
       <label style="padding:10px; background:#e5f0ff; border-radius:10px; color:#007aff; font-size:13px;">復元<input type="file" onchange="importData(this.files[0])" style="display:none;"></label>
     </div>
-    
     <div class="row" style="margin:10px 0;">
       <button id="filter-all" class="btn-toggle active" onclick="setFilter('all')">すべて</button>
       <button id="filter-fav" class="btn-toggle" onclick="setFilter('fav')">★お気に入り</button>
     </div>
-    
     <div class="row" style="margin-bottom:15px;">
       <button id="sort-reg" class="btn-toggle active" onclick="setSort('reg')">登録順</button>
       <button id="sort-count" class="btn-toggle" onclick="setSort('調理回数')">調理回数</button>
       <button id="sort-date" class="btn-toggle" onclick="setSort('最終調理日')">最終調理日</button>
     </div>
-    
     <div id="list"></div>
   </div>
 
@@ -90,7 +87,7 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
     </div>
     <input id="title" placeholder="タイトル" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:8px;">
     <input type="file" id="imageFile" style="margin-bottom:10px;">
-    <input id="group" placeholder="分類（主菜、副菜など）" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:10px;">
+    <input id="group" placeholder="分類" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:10px;">
     <div id="ingredientsArea"></div>
     <button onclick="addGroup()" style="width:100%; margin-top:5px;">+ 材料グループ追加</button>
     <div id="stepsArea"></div>
@@ -101,7 +98,7 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
   <div class="page" id="page-stock">
     <h3>在庫リスト</h3>
     <div class="row">
-      <input id="stockInput" placeholder="家にあるものを追加" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
+      <input id="stockInput" placeholder="追加" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
       <button onclick="addStock()">追加</button>
     </div>
     <div id="stockList" style="margin-top:15px;"></div>
@@ -122,7 +119,6 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
 </div>
 
 <div id="detail"></div>
-
 <button id="scrollTop" class="scroll-btn">▲</button>
 <button id="scrollBottom" class="scroll-btn">▼</button>
 
@@ -141,10 +137,12 @@ let stock = JSON.parse(localStorage.getItem("stockItems")||"[]");
 let editIndex = null, formImage = null, currentPage = 0, currentFilter = 'all', currentSort = 'reg';
 let startX = 0, startY = 0, isDragging = false, isDetailOpen = false, scrollTimeout;
 
-/* --- スワイプ制御 --- */
+/* --- スワイプ判定 (干渉回避) --- */
 const wrapper = document.getElementById('mainWrapper');
 wrapper.addEventListener('touchstart', (e) => {
-  if (isDetailOpen || e.target.closest('button, input, textarea, .fav-star')) return;
+  if (isDetailOpen || e.target.closest('button, input, .card, .list-row, .fav-star')) {
+    isDragging = false; return;
+  }
   startX = e.touches[0].clientX; startY = e.touches[0].clientY;
   isDragging = true; wrapper.style.transition = 'none';
 }, {passive: true});
@@ -155,8 +153,7 @@ wrapper.addEventListener('touchmove', (e) => {
   const dy = e.touches[0].clientY - startY;
   if (Math.abs(dx) > Math.abs(dy)) {
     if (e.cancelable) e.preventDefault();
-    let move = -currentPage * window.innerWidth + dx;
-    wrapper.style.transform = `translateX(${move}px)`;
+    wrapper.style.transform = `translateX(${-currentPage * window.innerWidth + dx}px)`;
   } else { isDragging = false; }
 }, {passive: false});
 
@@ -178,21 +175,20 @@ function switchPage(idx) {
   if(idx === 0) renderList(); else if(idx === 2) renderStock(); else if(idx === 3) renderShopping();
 }
 
-/* --- 一覧表示修正 --- */
+/* --- 一覧表示 --- */
 function setSort(s){ currentSort=s; renderList(); }
 function setFilter(m){ currentFilter=m; renderList(); }
 
 function renderList(){
   const listDiv = document.getElementById("list"); listDiv.innerHTML = "";
   let key = toKatakana(document.getElementById("search").value.toLowerCase());
-  
   document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
   document.getElementById('filter-' + currentFilter).classList.add('active');
   document.getElementById('sort-' + (currentSort==='調理回数'?'count':currentSort==='最終調理日'?'date':'reg')).classList.add('active');
 
   let groups = {};
   recipes.forEach((r, i) => {
-    let hit = toKatakana(r.title.toLowerCase()).includes(key) || (r.ingredients && r.ingredients.some(g => g.items.some(it => toKatakana(it.name.toLowerCase()).includes(key))));
+    let hit = toKatakana(r.title.toLowerCase()).includes(key);
     if(currentFilter === 'fav' && !r.favorite) hit = false;
     if(!hit) return;
     let g = (r.group || "").trim() || "未分類";
@@ -210,86 +206,44 @@ function renderList(){
     let wrap = document.createElement("div"); wrap.className = "grid";
     groups[gName].forEach(obj => {
       let r = obj.r;
-      // カード内表示を「×回数」か「日付」に
-      let badgeTxt = `×${r.count || 0}`;
-      if (currentSort === '最終調理日') badgeTxt = r.lastDate || '--';
-      
+      let badgeTxt = (currentSort === '最終調理日') ? (r.lastDate || '--') : `×${r.count || 0}`;
       let div = document.createElement("div"); div.className = "card";
       div.onclick = () => detailView(obj.i);
-      div.innerHTML = `
-        <div class="fav-star ${r.favorite?'active':''}" onclick="toggleFavorite(event, ${obj.i})">★</div>
-        <img src="${r.image || ''}">
-        <div class="card-info">
-          <div class="card-title">${r.title}</div>
-          <div class="badge">${badgeTxt}</div>
-        </div>`;
+      div.innerHTML = `<div class="fav-star ${r.favorite?'active':''}" onclick="toggleFavorite(event, ${obj.i})">★</div><img src="${r.image || ''}"><div class="card-info"><div class="card-title">${r.title}</div><div class="badge">${badgeTxt}</div></div>`;
       wrap.appendChild(div);
     });
     box.appendChild(wrap); listDiv.appendChild(box);
   });
 }
 
+/* --- 詳細表示 --- */
 function detailView(i) {
   let r = recipes[i]; const d = document.getElementById("detail");
   isDetailOpen = true;
-  d.innerHTML = `
-    <button onclick="closeDetail()" style="margin-bottom:15px;">← 戻る</button>
-    <h2 style="text-align:center; margin:10px 0;">${r.title}</h2>
-    <div class="row">
-      <button style="flex:1;" onclick="toggleFavorite(null, ${i})">${r.favorite?'★ 外す':'☆ お気に入り'}</button>
-      <button style="flex:1;" class="btn-green" onclick="cookToday(${i})">今日作った！</button>
-    </div>
-    <p style="text-align:center; font-size:12px; color:#888;">調理：${r.count||0}回 / 最終：${r.lastDate||'--'}</p>
-    ${r.image ? `<img src="${r.image}" style="width:100%; border-radius:12px; margin:10px 0;">` : ''}
-    <div id="detailIng"></div>
-    <h3 style="border-left:4px solid #007aff; padding-left:10px; margin-top:20px;">作り方</h3>
-    <div id="detailSteps"></div>
-    <button onclick="addShopping()" class="btn-green" style="width:100%; margin-top:20px; height:50px;">チェックした材料を買い物へ</button>
-    <div class="row" style="margin:30px 0;">
-      <button style="flex:1;" onclick="editRecipe(${i})">編集</button>
-      <button style="flex:1;" class="btn-red" onclick="deleteRecipe(${i})">削除</button>
-    </div>`;
-  
-  const ingDiv = document.getElementById("detailIng");
+  d.innerHTML = `<button onclick="closeDetail()" style="margin-bottom:15px;">← 戻る</button><h2 style="text-align:center;">${r.title}</h2><div class="row"><button style="flex:1;" onclick="toggleFavorite(null, ${i})">${r.favorite?'★ 外す':'☆ お気に入り'}</button><button style="flex:1;" class="btn-green" onclick="cookToday(${i})">今日作った！</button></div><div id="detailIng"></div><h3 style="margin-top:20px;">作り方</h3><div id="detailSteps"></div><button onclick="addShopping()" class="btn-green" style="width:100%; height:50px;">買い物へ追加</button><div class="row" style="margin:20px 0;"><button style="flex:1;" onclick="editRecipe(${i})">編集</button><button style="flex:1;" class="btn-red" onclick="deleteRecipe(${i})">削除</button></div>`;
   r.ingredients.forEach(g => {
-    ingDiv.innerHTML += `<div class="groupTitle" style="background:none; padding:0; margin-top:15px;">■ ${g.name}</div>`;
+    d.querySelector("#detailIng").innerHTML += `<div class="groupTitle">${g.name}</div>`;
     g.items.forEach(it => {
       let id = Math.random().toString(36).substr(2, 9);
-      ingDiv.innerHTML += `
-        <div class="list-row" style="box-shadow:none; border-bottom:1px solid #ddd; border-radius:0; padding:10px 5px;" onclick="toggleDetailCheck('${id}')">
-          <div class="list-label">
-            <input type="checkbox" id="${id}" data-name="${it.name}" data-amount="${it.amount}">
-            <span>${it.name} <small>(${it.amount})</small></span>
-          </div>
-        </div>`;
+      d.querySelector("#detailIng").innerHTML += `<div class="list-row" onclick="const c=this.querySelector('input'); c.checked=!c.checked;"><div class="list-label"><input type="checkbox" id="${id}" data-name="${it.name}" data-amount="${it.amount}"><span>${it.name} (${it.amount})</span></div></div>`;
     });
   });
-  r.steps.forEach(s => {
-    document.getElementById("detailSteps").innerHTML += `<p style="line-height:1.6; padding:8px; border-bottom:1px solid #eee;">${s}</p>`;
-  });
+  r.steps.forEach(s => { d.querySelector("#detailSteps").innerHTML += `<p style="padding:8px; border-bottom:1px solid #eee;">${s}</p>`; });
   d.style.transform = "translateX(0)"; d.scrollTo(0,0);
 }
-function toggleDetailCheck(id){ const el = document.getElementById(id); el.checked = !el.checked; }
 function closeDetail() { document.getElementById("detail").style.transform = "translateX(100%)"; isDetailOpen = false; renderList(); }
 
-/* --- 買い物リスト（競合対策） --- */
+/* --- 買い物リスト修正 --- */
 function renderShopping(){
   let list = document.getElementById("shopList"); list.innerHTML = "";
   shopping.sort((a,b) => a.checked - b.checked).forEach((s, i) => {
     let div = document.createElement("div"); div.className = "list-row"; div.style.opacity = s.checked ? 0.5 : 1;
-    // 行タップでチェック
     div.onclick = () => { shopping[i].checked = !shopping[i].checked; localStorage.setItem("shopping", JSON.stringify(shopping)); renderShopping(); };
-    div.innerHTML = `
-      <div class="list-label">
-        <input type="checkbox" ${s.checked?'checked':''}>
-        <span style="${s.checked?'text-decoration:line-through':''}">${s.name} (${s.amount})</span>
-      </div>
-      <button class="delBtn" onclick="event.stopPropagation(); shopping.splice(${i},1); localStorage.setItem('shopping',JSON.stringify(shopping)); renderShopping();">×</button>`;
+    div.innerHTML = `<div class="list-label"><input type="checkbox" ${s.checked?'checked':''}><span>${s.name} (${s.amount})</span></div><button class="delBtn" onclick="event.stopPropagation(); shopping.splice(${i},1); localStorage.setItem('shopping',JSON.stringify(shopping)); renderShopping();">×</button>`;
     list.appendChild(div);
   });
 }
 
-/* --- 在庫リスト --- */
 function renderStock(){
   let list = document.getElementById("stockList"); list.innerHTML = "";
   stock.forEach((s, i) => {
@@ -297,66 +251,31 @@ function renderStock(){
   });
 }
 
-/* --- その他アクション --- */
+/* --- 各種アクション --- */
 function cookToday(i){
   let d = new Date(); let ds = `${d.getFullYear().toString().slice(-2)}/${d.getMonth()+1}/${d.getDate()}`;
   recipes[i].count = (recipes[i].count || 0) + 1; recipes[i].lastDate = ds;
-  localStorage.setItem("recipes", JSON.stringify(recipes)); detailView(i); showToast("調理を記録しました！");
+  localStorage.setItem("recipes", JSON.stringify(recipes)); detailView(i); showToast("記録しました");
 }
-function toggleFavorite(e, i){
-  if(e) e.stopPropagation();
-  recipes[i].favorite = !recipes[i].favorite; localStorage.setItem("recipes", JSON.stringify(recipes));
-  if(isDetailOpen) detailView(i); else renderList();
-}
-function addStock(){
-  let input = document.getElementById("stockInput"); if(!input.value) return;
-  stock.push(input.value); input.value = ""; localStorage.setItem("stockItems", JSON.stringify(stock)); renderStock();
-}
-function addManual(){
-  let n = document.getElementById("manualItem"), a = document.getElementById("manualAmount"); if(!n.value) return;
-  shopping.push({name: n.value, amount: a.value, checked: false}); n.value = ""; a.value = "";
-  localStorage.setItem("shopping", JSON.stringify(shopping)); renderShopping();
-}
-function addShopping(){
-  document.querySelectorAll("#detail input:checked").forEach(c => { shopping.push({name: c.dataset.name, amount: c.dataset.amount, checked: false}); });
-  localStorage.setItem("shopping", JSON.stringify(shopping)); showToast("追加しました");
-}
+function toggleFavorite(e, i){ if(e) e.stopPropagation(); recipes[i].favorite = !recipes[i].favorite; localStorage.setItem("recipes", JSON.stringify(recipes)); if(isDetailOpen) detailView(i); else renderList(); }
+function addStock(){ let input = document.getElementById("stockInput"); if(!input.value) return; stock.push(input.value); input.value = ""; localStorage.setItem("stockItems", JSON.stringify(stock)); renderStock(); }
+function addManual(){ let n = document.getElementById("manualItem"), a = document.getElementById("manualAmount"); if(!n.value) return; shopping.push({name: n.value, amount: a.value, checked: false}); n.value = ""; a.value = ""; localStorage.setItem("shopping", JSON.stringify(shopping)); renderShopping(); }
+function addShopping(){ document.querySelectorAll("#detail input:checked").forEach(c => { shopping.push({name: c.dataset.name, amount: c.dataset.amount, checked: false}); }); localStorage.setItem("shopping", JSON.stringify(shopping)); showToast("追加しました"); }
 function clearShopping(){ if(confirm("空にしますか？")){ shopping=[]; localStorage.setItem("shopping","[]"); renderShopping(); } }
 function deleteRecipe(i){ if(confirm("削除しますか？")){ recipes.splice(i,1); localStorage.setItem("recipes", JSON.stringify(recipes)); closeDetail(); } }
 
 /* --- 登録フォーム --- */
-function addGroup(){
-  let div = document.createElement("div"); div.style = "background:#fff; padding:10px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;";
-  div.innerHTML = `<div class="row"><input placeholder="グループ名" style="flex:1; padding:8px;"><button class="delBtn" onclick="this.parentNode.parentNode.remove()">×</button></div><div class="items"></div><button onclick="addItem(this.previousElementSibling)" style="margin-top:5px; font-size:12px;">+ 材料追加</button>`;
-  document.getElementById("ingredientsArea").appendChild(div); addItem(div.querySelector(".items"));
-}
-function addItem(c){
-  let r = document.createElement("div"); r.className = "row";
-  r.innerHTML = `<input placeholder="材料" style="flex:1; padding:8px;"><input placeholder="分量" style="width:70px; padding:8px;"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
-  c.appendChild(r);
-}
-function addStep(){
-  let d = document.createElement("div"); d.className = "row";
-  d.innerHTML = `<textarea style="flex:1; height:50px; padding:8px; border-radius:8px; border:1px solid #ddd;"></textarea><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
-  document.getElementById("stepsArea").appendChild(d);
-}
+function addGroup(){ let div = document.createElement("div"); div.style = "background:#fff; padding:10px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;"; div.innerHTML = `<div class="row"><input placeholder="グループ名" style="flex:1; padding:8px;"><button class="delBtn" onclick="this.parentNode.parentNode.remove()">×</button></div><div class="items"></div><button onclick="addItem(this.previousElementSibling)" style="margin-top:5px; font-size:12px;">+ 材料追加</button>`; document.getElementById("ingredientsArea").appendChild(div); addItem(div.querySelector(".items")); }
+function addItem(c){ let r = document.createElement("div"); r.className = "row"; r.innerHTML = `<input placeholder="材料" style="flex:1; padding:8px;"><input placeholder="分量" style="width:70px; padding:8px;"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`; c.appendChild(r); }
+function addStep(){ let d = document.createElement("div"); d.className = "row"; d.innerHTML = `<textarea style="flex:1; height:50px; padding:8px; border-radius:8px; border:1px solid #ddd;"></textarea><button class="delBtn" onclick="this.parentNode.remove()">×</button>`; document.getElementById("stepsArea").appendChild(d); }
 function saveRecipe(){
-  let ing = [];
-  document.querySelectorAll("#ingredientsArea > div").forEach(g => {
-    let items = []; g.querySelectorAll(".items .row").forEach(row => {
-      let ins = row.querySelectorAll("input"); if(ins[0].value) items.push({name: ins[0].value, amount: ins[1].value});
-    });
+  let ing = []; document.querySelectorAll("#ingredientsArea > div").forEach(g => {
+    let items = []; g.querySelectorAll(".items .row").forEach(row => { let ins = row.querySelectorAll("input"); if(ins[0].value) items.push({name: ins[0].value, amount: ins[1].value}); });
     ing.push({name: g.querySelector("input").value || "材料", items});
   });
   let steps = []; document.querySelectorAll("#stepsArea textarea").forEach((t, i) => { if(t.value.trim()) steps.push((i+1) + ". " + t.value.trim()); });
-  let data = {
-    title: document.getElementById("title").value || "無題", group: document.getElementById("group").value || "未分類",
-    image: formImage, ingredients: ing, steps: steps,
-    favorite: editIndex !== null ? recipes[editIndex].favorite : false, count: editIndex !== null ? recipes[editIndex].count : 0,
-    lastDate: editIndex !== null ? recipes[editIndex].lastDate : null
-  };
-  if(editIndex !== null) recipes[editIndex] = data; else recipes.push(data);
-  localStorage.setItem("recipes", JSON.stringify(recipes)); clearForm(); switchPage(0); showToast("保存しました");
+  let data = { title: document.getElementById("title").value || "無題", group: document.getElementById("group").value || "未分類", image: formImage, ingredients: ing, steps: steps, favorite: editIndex !== null ? recipes[editIndex].favorite : false, count: editIndex !== null ? recipes[editIndex].count : 0, lastDate: editIndex !== null ? recipes[editIndex].lastDate : null };
+  if(editIndex !== null) recipes[editIndex] = data; else recipes.push(data); localStorage.setItem("recipes", JSON.stringify(recipes)); clearForm(); switchPage(0); showToast("保存しました");
 }
 function editRecipe(i){ editIndex = i; let r = recipes[i]; formImage = r.image; closeDetail(); switchPage(1); document.getElementById("title").value = r.title; }
 function clearForm(){ document.getElementById("title").value = ""; document.getElementById("ingredientsArea").innerHTML = ""; document.getElementById("stepsArea").innerHTML = ""; editIndex = null; formImage = null; }
@@ -379,7 +298,7 @@ function handleScroll() {
 document.getElementById("scrollTop").onclick = (e) => { e.stopPropagation(); getActiveScrollEl().scrollTo({top:0, behavior:'smooth'}); };
 document.getElementById("scrollBottom").onclick = (e) => { e.stopPropagation(); const el = getActiveScrollEl(); el.scrollTo({top:el.scrollHeight, behavior:'smooth'}); };
 
-/* --- 画像 --- */
+/* --- 画像処理 --- */
 document.getElementById("imageFile").addEventListener("change", function(e){
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
