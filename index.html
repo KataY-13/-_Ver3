@@ -14,35 +14,35 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
 .main-wrapper { display: flex; width: 400%; height: 100%; transition: transform 0.3s ease-out; }
 .page { width: 25%; height: 100%; overflow-y: auto; padding: 10px 10px 110px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
 
-/* 詳細画面：pointer-eventsを追加 */
+/* 詳細画面 */
 #detail {
   position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 90px);
   background: #f2f2f7; z-index: 1000; overflow-y: auto;
   transition: transform 0.3s ease-out; transform: translateX(100%);
   padding: 10px 10px 110px; box-sizing: border-box;
-  pointer-events: none; /* 隠れている時は下のボタンを通す */
+  pointer-events: none;
 }
 #detail.open {
   transform: translateX(0%);
-  pointer-events: auto; /* 開いている時は操作可能 */
+  pointer-events: auto;
 }
 
 .tabbar { position:fixed; bottom:0; width:100%; display:flex; background:#fff; border-top:1px solid #ccc; z-index: 2000; height: 90px; }
 .tabbar button { flex:1; padding:0; font-size:18px; background: none; border: none; color: #999; }
 .tabbar button.active { color: #007aff; font-weight: bold; }
 
-/* デザインパーツ（変更なし） */
+/* デザインパーツ（v1.10踏襲） */
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
 .card { background:#fff; border-radius:12px; overflow:hidden; font-size:11px; position: relative; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
 .card img { width:100%; height:80px; object-fit:cover; }
 .card div { text-align:center; }
 .groupTitle { background:#e5e5ea; padding:10px; margin-top:10px; font-weight:bold; border-radius:8px; }
 .detail-img { width:60%; max-width:250px; display:block; margin:10px auto; border-radius:10px; }
-#add input, #add textarea { font-size:16px; padding:12px; width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:10px; }
+#add input, #add textarea { font-size:16px; padding:12px; min-height:22px; width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:10px; }
 .row { display:flex; gap:5px; margin-top:5px; }
 .row input:nth-child(1){ flex:4; }
 .row input:nth-child(2){ flex:3; }
-.delBtn { width:28px; height:44px; font-size:14px; background:#ff3b30; color:#fff; border:none; border-radius:10px; }
+.delBtn { width:1.2em; min-width:28px; height:44px; font-size:14px; background:#ff3b30; color:#fff; border:none; border-radius:10px; }
 .groupBox { background:#fff; padding:8px; margin:8px 0; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
 .stepBox { display:flex; gap:5px; align-items:center; margin:5px 0; }
 .stepNumber { width:25px; text-align:right; }
@@ -51,12 +51,12 @@ li { list-style:none; background:#fff; margin:6px 0; padding:10px; border-radius
 .gray { color:#aaa; text-decoration:line-through; }
 .topbar { display:flex; justify-content:space-between; gap:8px; align-items:center; }
 button:not(.tabbar button) { min-height:44px; font-size:16px; padding:10px 12px; border:none; border-radius:10px; background:#e5f0ff; color:#007aff; }
-button:active { opacity:0.5; }
+button:active { opacity:0.7; }
 input[type="checkbox"] { transform:scale(1.3); }
-#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:12px 20px; border-radius:20px; font-size:14px; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index: 3000; }
-#toast.show { opacity:1; }
+#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:12px 20px; border-radius:20px; font-size:14px; opacity:0; transition:opacity 0.3s, bottom 0.3s; pointer-events:none; z-index: 3000; }
+#toast.show { opacity:1; bottom:100px; }
 .linkBtn { display:block; text-align:center; margin:10px 0; padding:12px; border-radius:10px; background:#e5f0ff; color:#007aff; text-decoration:none; font-size:16px; }
-.fav-star { position: absolute; top: 5px; right: 5px; font-size: 24px; color: #ccc; z-index: 10; }
+.fav-star { position: absolute; top: 5px; right: 5px; font-size: 24px; color: #ccc; z-index: 10; text-shadow: 0 0 3px #fff; }
 .fav-star.active { color: #ffcc00; }
 .filter-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
 .filter-btn { flex: 1; max-width: 150px; }
@@ -69,35 +69,38 @@ input[type="checkbox"] { transform:scale(1.3); }
   <div class="main-viewport" id="viewport">
     <div class="main-wrapper" id="mainWrapper">
       <div class="page" id="page-list">
-        <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:4px;">v1.12</div>
+        <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:4px;">v1.13</div>
         <div class="topbar">
           <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
-          <button onclick="exportData()">保存</button>
+          <button onclick="exportData()">バックアップ</button>
           <label style="padding:10px 12px; background:#e5f0ff; border-radius:10px; color:#007aff;">復元<input type="file" onchange="importData(this.files[0])" style="display:none;"></label>
         </div>
         <div class="filter-bar" style="margin-top:10px;">
           <button id="btnAll" class="filter-btn active" onclick="setFilter('all')">すべて</button>
-          <button id="btnFav" class="filter-btn" onclick="setFilter('fav')">★のみ</button>
+          <button id="btnFav" class="filter-btn" onclick="setFilter('fav')">お気に入り★</button>
         </div>
         <div id="list"></div>
       </div>
+
       <div class="page" id="page-add">
-        <div class="topbar"><h3>登録</h3><div style="display:flex; gap:6px;"><button onclick="saveRecipe()">保存</button><button onclick="clearForm()">消去</button></div></div>
-        <input id="sourceUrl" placeholder="URL" style="margin-top:8px;">
+        <div class="topbar"><h3>レシピ登録</h3><div style="display:flex; gap:6px;"><button onclick="saveRecipe()">保存</button><button onclick="clearForm()">クリア</button></div></div>
+        <input id="sourceUrl" placeholder="ソース元URL" style="margin-top:8px;">
         <input id="title" placeholder="タイトル" style="margin-top:8px;">
         <input type="file" id="imageFile" style="margin-top:8px;">
-        <input id="group" placeholder="分類（主菜など）" style="margin-top:8px;">
-        <h4>材料</h4><div id="ingredientsArea"></div><button onclick="addGroup()">グループ追加</button>
+        <input id="group" placeholder="主菜など" style="margin-top:8px;">
+        <h4>材料</h4><div id="ingredientsArea"></div><button onclick="addGroup()">材料グループ追加</button>
         <h4>作り方</h4><div id="stepsArea"></div><button onclick="addStep()">工程追加</button>
       </div>
+
       <div class="page" id="page-shopping">
-        <div class="topbar"><h3>買い物</h3><button onclick="clearShopping()">全消去</button></div>
-        <div class="row"><input id="manualItem" placeholder="もの"><input id="manualAmount" placeholder="分量"></div>
+        <div class="topbar"><h3>買い物リスト</h3><button onclick="clearShopping()">クリア</button></div>
+        <div class="row"><input id="manualItem" placeholder="材料"><input id="manualAmount" placeholder="分量"></div>
         <button onclick="addManual()" style="width:100%; margin-top:8px;">追加</button>
         <ul id="shopList" style="padding:0;"></ul>
       </div>
+
       <div class="page" id="page-stock">
-        <div class="topbar"><h3>在庫</h3></div>
+        <div class="topbar"><h3>在庫リスト</h3></div>
         <div class="row"><input id="stockItem" placeholder="アイテム名"><button onclick="addStock()">追加</button></div>
         <ul id="stockList" style="margin-top:10px; padding:0;"></ul>
       </div>
@@ -120,7 +123,7 @@ let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
 let stock = JSON.parse(localStorage.getItem("stockItems")||"[]");
 let editIndex=null, formImage = null, openGroups={}, currentFilter = 'all', currentPage = 0;
 
-/* --- スワイプ・スライド管理（競合対策版） --- */
+/* --- スワイプ管理ロジック --- */
 const wrapper = document.getElementById('mainWrapper');
 const detailEl = document.getElementById('detail');
 let startX = 0, startY = 0, moveX = 0, isScrolling = false, isHorizontal = false;
@@ -139,30 +142,23 @@ function updateUI() {
   if(currentPage === 3) renderStock();
 }
 
-// メインスワイプ
 wrapper.ontouchstart = e => { 
-  startX = e.touches[0].pageX; 
-  startY = e.touches[0].pageY; 
-  moveX = 0; 
-  isScrolling = false; 
-  isHorizontal = false; 
+  startX = e.touches[0].pageX; startY = e.touches[0].pageY; 
+  moveX = 0; isScrolling = false; isHorizontal = false; 
   wrapper.style.transition = 'none'; 
 };
 
 wrapper.ontouchmove = e => {
   let dx = e.touches[0].pageX - startX;
   let dy = e.touches[0].pageY - startY;
-
-  // 縦横の判定（一度判定したら指を離すまで固定）
   if (!isScrolling && !isHorizontal) {
-    if (Math.abs(dy) > Math.abs(dx)) { isScrolling = true; } // 縦スクロール
-    else if (Math.abs(dx) > 10) { isHorizontal = true; }   // 横スワイプ確定
+    if (Math.abs(dy) > Math.abs(dx)) { isScrolling = true; }
+    else if (Math.abs(dx) > 10) { isHorizontal = true; }
   }
-
   if (isHorizontal) {
-    e.preventDefault(); // 横に動いている時は縦スクロールを止める
+    e.preventDefault();
     moveX = dx;
-    let offset = -currentPage * (window.innerWidth) + (moveX * 1.2); // 指より少し早く
+    let offset = -currentPage * (window.innerWidth) + (moveX * 1.1);
     wrapper.style.transform = `translateX(${offset}px)`;
   }
 };
@@ -176,7 +172,6 @@ wrapper.ontouchend = () => {
   updateUI();
 };
 
-// 詳細スワイプ
 detailEl.ontouchstart = e => { startX = e.touches[0].pageX; moveX = 0; isHorizontal = false; detailEl.style.transition = 'none'; };
 detailEl.ontouchmove = e => {
   let dx = e.touches[0].pageX - startX;
@@ -194,7 +189,7 @@ function closeDetail() {
   detailEl.style.transform = "translateX(100%)";
 }
 
-/* --- 以下、既存ロジック --- */
+/* --- 以下、既存ロジック（v1.11完全準拠） --- */
 function renderList(){
   const list = document.getElementById("list"); list.innerHTML="";
   let key = toKatakana(document.getElementById("search").value.toLowerCase());
@@ -228,7 +223,7 @@ function renderList(){
 function detailView(i){
   let r=recipes[i];
   let html = `<div class="topbar"><div style="flex:1; text-align:center; font-weight:bold;">${r.title}</div></div>`;
-  if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元</a>`;
+  if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
   if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
   r.ingredients.forEach(g=>{
     html+=`<h3>${g.name}</h3>`;
@@ -236,7 +231,7 @@ function detailView(i){
   });
   html+=`<h3>作り方</h3>`;
   r.steps.forEach(s=> html+=s+"<br>");
-  html+=`<div style="display:flex; flex-direction:column; gap:8px; margin-top:20px;"><button onclick="addShopping()">チェックした材料を買い物へ</button><button onclick="editRecipe(${i})">編集</button><button onclick="deleteRecipe(${i})">削除</button></div>`;
+  html+=`<button onclick="addShopping()">買い物リストへ追加</button><button onclick="editRecipe(${i})">編集</button><button onclick="deleteRecipe(${i})">削除</button>`;
   detailEl.innerHTML=html;
   detailEl.classList.add('open');
   detailEl.style.transform = "translateX(0%)";
@@ -261,7 +256,7 @@ document.getElementById("imageFile").addEventListener("change", function(e){
 
 function addShopping(){
   let count=0; document.querySelectorAll("#detail input:checked").forEach(c=>{ shopping.push({name:c.dataset.name,amount:c.dataset.amount,checked:false}); count++; });
-  localStorage.setItem("shopping",JSON.stringify(shopping));
+  localStorage.setItem("shopping",JSON.stringify(shopping)); renderShopping();
   if(count>0) showToast("買い物リストに追加しました");
 }
 function addManual(){ shopping.push({name:manualItem.value,amount:manualAmount.value,checked:false}); manualItem.value=""; manualAmount.value=""; localStorage.setItem("shopping",JSON.stringify(shopping)); renderShopping(); }
