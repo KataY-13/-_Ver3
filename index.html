@@ -217,6 +217,25 @@ input, textarea {
   color: #fff !important;
 }
 
+/* 並べ替えエリアのスタイル */
+.sort-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #333;
+}
+.sort-select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
 /* 詳細用アクションボタン並び */
 .action-row {
   display: flex;
@@ -257,7 +276,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.02
+ ver.4.05
 </div>
 
 <div class="topbar" id="listBar">
@@ -271,9 +290,19 @@ input, textarea {
   </label>
 </div>
 
-<div id="filterArea" class="filter-bar">
-  <button id="btnAll" class="filter-btn active" onclick="setFilter('all')">すべて</button>
-  <button id="btnFav" class="filter-btn" onclick="setFilter('fav')">お気に入り★</button>
+<div id="filterArea">
+  <div class="filter-bar">
+    <button id="btnAll" class="filter-btn active" onclick="setFilter('all')">すべて</button>
+    <button id="btnFav" class="filter-btn" onclick="setFilter('fav')">お気に入り★</button>
+  </div>
+  <div class="sort-area">
+    <span>並べ替え：</span>
+    <select id="sortSelect" class="sort-select" onchange="renderList()">
+      <option value="reg">登録順</option>
+      <option value="count">調理回数</option>
+      <option value="date">最終調理日</option>
+    </select>
+  </div>
 </div>
 
 <div id="list"></div>
@@ -358,7 +387,7 @@ function show(p){
   document.getElementById("stock").classList.add("hidden"); 
 
   document.getElementById("listBar").style.display = (p==="list") ? "flex" : "none";
-  document.getElementById("filterArea").style.display = (p==="list") ? "flex" : "none";
+  document.getElementById("filterArea").style.display = (p==="list") ? "block" : "none";
 
   if(p==="list") list.classList.remove("hidden");
   if(p==="add") add.classList.remove("hidden");
@@ -469,7 +498,9 @@ document.getElementById("imageFile").addEventListener("change", function(e){
 function renderList(){
  list.innerHTML="";
  let key = toKatakana(search.value.toLowerCase());
+ let sortType = document.getElementById("sortSelect").value;
  let groups={};
+ 
  recipes.forEach((r,i)=>{
    let hit = toKatakana(r.title.toLowerCase()).includes(key);
    if(currentFilter === 'fav' && !r.favorite) hit = false;
@@ -478,6 +509,7 @@ function renderList(){
    if(!groups[g]) groups[g]=[];
    groups[g].push({r,i});
  });
+
  Object.keys(groups).sort().forEach(g=>{
    if(openGroups[g] === undefined) openGroups[g] = true;
    let box = document.createElement("div");
@@ -486,10 +518,32 @@ function renderList(){
    title.textContent=g;
    title.onclick=()=>{ openGroups[g]=!openGroups[g]; renderList(); };
    box.appendChild(title);
+   
    if(openGroups[g]){
      let wrap=document.createElement("div");
      wrap.className="grid";
-     groups[g].forEach(obj=>{
+     
+     // グループ内でのソート処理
+     let targetList = groups[g];
+     if(sortType === 'count') {
+       targetList.sort((a,b) => {
+         let valA = a.r.cookCount || 0;
+         let valB = b.r.cookCount || 0;
+         if(valA === valB) return a.i - b.i; // 値が同じなら登録順
+         return valB - valA; // 降順
+       });
+     } else if(sortType === 'date') {
+       targetList.sort((a,b) => {
+         let valA = a.r.lastCookedDate ? new Date(a.r.lastCookedDate).getTime() : 0;
+         let valB = b.r.lastCookedDate ? new Date(b.r.lastCookedDate).getTime() : 0;
+         if(valA === valB) return a.i - b.i; 
+         return valB - valA;
+       });
+     } else {
+       targetList.sort((a,b) => a.i - b.i); // デフォルト：登録順
+     }
+
+     targetList.forEach(obj=>{
        let r=obj.r;
        let div=document.createElement("div");
        div.className="card";
