@@ -73,7 +73,7 @@ input[type="checkbox"] { transform:scale(1.3); }
   <div class="main-viewport" id="viewport">
     <div class="main-wrapper" id="mainWrapper">
       <div class="page" id="page-list">
-        <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:4px;">v1.18</div>
+        <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:4px;">v1.19</div>
         <div class="topbar" id="listBar">
           <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
           <button onclick="exportData()">バックアップ</button>
@@ -132,20 +132,19 @@ let stock = JSON.parse(localStorage.getItem("stockItems")||"[]");
 
 let editIndex=null, formImage = null, openGroups={}, currentFilter = 'all', currentPage = 0;
 
-/* --- スワイプ・スライド管理（競合解消版） --- */
+/* --- スワイプ・スライド管理（v1.19 最終安定版） --- */
 const wrapper = document.getElementById('mainWrapper');
 const detailEl = document.getElementById('detail');
 let startX = 0, startY = 0, moveX = 0, isScrolling = false, isHorizontal = false;
 
 function show(idx) {
-  if (detailEl.classList.contains('open')) {
-    closeDetail();
-  }
+  if (detailEl.classList.contains('open')) closeDetail();
   currentPage = idx;
   updateUI();
 }
 
 function updateUI() {
+  wrapper.style.transition = 'transform 0.3s ease-out';
   wrapper.style.transform = `translateX(${-currentPage * 25}%)`;
   document.querySelectorAll('.tabbar button').forEach((btn, i) => {
     btn.classList.toggle('active', i === currentPage);
@@ -155,63 +154,69 @@ function updateUI() {
   if(currentPage === 3) renderStock();
 }
 
-// メインスワイプ処理：ブラウザのクリックイベントと競合しないよう、条件を厳格化
-wrapper.ontouchstart = e => { 
-  startX = e.touches[0].pageX; 
-  startY = e.touches[0].pageY; 
-  moveX = 0; 
-  isScrolling = false; 
-  isHorizontal = false; 
-  wrapper.style.transition = 'none'; 
-};
+// タッチイベントの登録方法を変更（addEventListenerを使用）
+wrapper.addEventListener('touchstart', e => {
+  startX = e.touches[0].pageX;
+  startY = e.touches[0].pageY;
+  moveX = 0;
+  isScrolling = false;
+  isHorizontal = false;
+  wrapper.style.transition = 'none';
+}, { passive: true }); // passive: true でクリックへの干渉を防ぐ
 
-wrapper.ontouchmove = e => {
+wrapper.addEventListener('touchmove', e => {
   let dx = e.touches[0].pageX - startX;
   let dy = e.touches[0].pageY - startY;
-  
-  // 30px以上横に動くまではisHorizontalをtrueにしない（＝preventDefaultを呼ばない）
+
   if (!isScrolling && !isHorizontal) {
-    if (Math.abs(dy) > Math.abs(dx)) { 
-      isScrolling = true; 
-    } else if (Math.abs(dx) > 30) { 
-      isHorizontal = true; 
+    if (Math.abs(dy) > Math.abs(dx)) {
+      isScrolling = true;
+    } else if (Math.abs(dx) > 20) { // 20px以上の移動でスワイプと判定
+      isHorizontal = true;
     }
   }
 
   if (isHorizontal) {
-    // スワイプが確定したときだけ、標準のクリック動作等をキャンセルする
-    if (e.cancelable) e.preventDefault();
+    // スワイプ中であることが確定した場合のみ、ブラウザの標準挙動を止める
+    // 注意: passive: true の場合は preventDefault が呼べないため、
+    // ここでは transform の更新のみを行い、クリックの邪魔をしません。
     moveX = dx;
     let offset = -currentPage * (window.innerWidth) + (moveX * 1.1);
     wrapper.style.transform = `translateX(${offset}px)`;
   }
-};
+}, { passive: true });
 
-wrapper.ontouchend = () => {
+wrapper.addEventListener('touchend', () => {
   wrapper.style.transition = 'transform 0.3s ease-out';
-  if (isHorizontal && Math.abs(moveX) > 50) {
+  if (isHorizontal && Math.abs(moveX) > 60) {
     if (moveX > 0 && currentPage > 0) currentPage--;
     else if (moveX < 0 && currentPage < 3) currentPage++;
   }
   updateUI();
-};
+});
 
-// 詳細画面スワイプ処理
-detailEl.ontouchstart = e => { startX = e.touches[0].pageX; moveX = 0; isHorizontal = false; detailEl.style.transition = 'none'; };
-detailEl.ontouchmove = e => {
+// 詳細画面のスワイプも同様に修正
+detailEl.addEventListener('touchstart', e => {
+  startX = e.touches[0].pageX;
+  moveX = 0;
+  isHorizontal = false;
+  detailEl.style.transition = 'none';
+}, { passive: true });
+
+detailEl.addEventListener('touchmove', e => {
   let dx = e.touches[0].pageX - startX;
-  if (!isHorizontal && dx > 30) isHorizontal = true;
-  if (isHorizontal && dx > 0) { 
-    if (e.cancelable) e.preventDefault();
-    moveX = dx; 
-    detailEl.style.transform = `translateX(${moveX * 1.1}px)`; 
+  if (!isHorizontal && dx > 20) isHorizontal = true;
+  if (isHorizontal && dx > 0) {
+    moveX = dx;
+    detailEl.style.transform = `translateX(${moveX * 1.1}px)`;
   }
-};
-detailEl.ontouchend = () => {
+}, { passive: true });
+
+detailEl.addEventListener('touchend', () => {
   detailEl.style.transition = 'transform 0.3s ease-out';
   if (moveX > 100) closeDetail();
   else detailEl.style.transform = "translateX(0%)";
-};
+});
 
 function closeDetail() { 
   detailEl.classList.remove('open');
