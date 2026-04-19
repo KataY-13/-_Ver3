@@ -217,14 +217,33 @@ input, textarea {
   color: #fff !important;
 }
 
-/* 詳細用お気に入りボタンの個別スタイル */
-.fav-detail-btn {
-  width: 100%;
-  font-weight: bold;
+/* 詳細用アクションボタン並び */
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
 }
+.action-row button {
+  flex: 1;
+  margin-top: 0 !important;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ボタン色 */
 .fav-detail-btn.active {
-  background: #fff0b3; /* 薄い黄色 */
+  background: #fff0b3; 
   color: #cca300;
+}
+.cook-btn {
+  background: #e5ffe5 !important;
+  color: #34c759 !important;
+}
+.cook-info {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  margin-top: 4px;
 }
 </style>
 </head>
@@ -238,7 +257,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.01
+ ver.4.02
 </div>
 
 <div class="topbar" id="listBar">
@@ -323,7 +342,7 @@ let formImage = null;
 let openGroups={};
 let currentFilter = 'all';
 
-/* --- スワイプ管理用変数 --- */
+/* --- スワイプ管理用 --- */
 let startX = 0;
 let startY = 0;
 const pageOrder = ['list', 'add', 'shopping', 'stock'];
@@ -364,7 +383,7 @@ function getTabName(p) {
   if(p==='stock') return '在庫';
 }
 
-/* --- スワイプ機能の実装 --- */
+/* --- スワイプ実装 --- */
 window.addEventListener('touchstart', (e) => {
   startX = e.touches[0].pageX;
   startY = e.touches[0].pageY;
@@ -381,7 +400,6 @@ window.addEventListener('touchend', (e) => {
       if (diffX > 0) show('list'); 
       return;
     }
-
     let currentIndex = pageOrder.indexOf(currentPage);
     if (diffX > 0) {
       let nextIndex = (currentIndex - 1 + pageOrder.length) % pageOrder.length;
@@ -393,17 +411,25 @@ window.addEventListener('touchend', (e) => {
   }
 }, { passive: true });
 
-/* --- お気に入り機能追加 (詳細画面用) --- */
+/* --- お気に入り & 調理記録 --- */
 function toggleFavoriteInDetail(index) {
   recipes[index].favorite = !recipes[index].favorite;
   localStorage.setItem("recipes", JSON.stringify(recipes));
-  // 詳細画面を再描画してボタン表示を更新
   detailView(index);
-  // 裏側で一覧の描画も準備しておく
   renderList();
 }
 
-/* --- 以下、ベースコードの機能 --- */
+function markAsCooked(index) {
+  const r = recipes[index];
+  r.cookCount = (r.cookCount || 0) + 1;
+  const now = new Date();
+  r.lastCookedDate = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+  localStorage.setItem("recipes", JSON.stringify(recipes));
+  detailView(index);
+  showToast("調理を記録しました！");
+}
+
+/* --- 以下、基本機能 --- */
 
 function setFilter(mode) {
  currentFilter = mode;
@@ -421,10 +447,7 @@ function toggleFavorite(e, index) {
 
 document.getElementById("imageFile").addEventListener("change", function(e){
  const file = e.target.files[0];
- if(!file) {
-   formImage = null;
-   return;
- }
+ if(!file) { formImage = null; return; }
  const reader = new FileReader();
  reader.onload = function(evt){
    const img = new Image();
@@ -494,10 +517,19 @@ function detailView(i){
  
  if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
  
- // お気に入りボタンの追加
- const favBtnText = r.favorite ? "★ お気に入りから外す" : "☆ お気に入りに追加";
+ // お気に入り & 今日作った ボタン（横並び）
+ const favBtnText = r.favorite ? "★ 解除" : "☆ お気に入り";
  const favBtnClass = r.favorite ? "fav-detail-btn active" : "fav-detail-btn";
- html += `<button class="${favBtnClass}" onclick="toggleFavoriteInDetail(${i})">${favBtnText}</button>`;
+ 
+ html += `
+  <div class="action-row">
+    <button class="${favBtnClass}" onclick="toggleFavoriteInDetail(${i})">${favBtnText}</button>
+    <button class="cook-btn" onclick="markAsCooked(${i})">🍳 今日作った</button>
+  </div>
+  <div class="cook-info">
+    調理回数: ${r.cookCount || 0}回 / 最終: ${r.lastCookedDate || '未記録'}
+  </div>
+ `;
  
  if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
  r.ingredients.forEach(g=>{
@@ -527,8 +559,7 @@ function addShopping(){
 
 function addManual(){
  shopping.push({name:manualItem.value,amount:manualAmount.value,checked:false});
- manualItem.value="";
- manualAmount.value="";
+ manualItem.value=""; manualAmount.value="";
  localStorage.setItem("shopping",JSON.stringify(shopping));
  renderShopping();
 }
@@ -608,44 +639,30 @@ function saveRecipe(){
      sourceUrl: sourceUrl.value,
      ingredients: ing,
      steps,
-     favorite: editIndex !== null ? recipes[editIndex].favorite : false
+     favorite: editIndex !== null ? recipes[editIndex].favorite : false,
+     cookCount: editIndex !== null ? (recipes[editIndex].cookCount || 0) : 0,
+     lastCookedDate: editIndex !== null ? (recipes[editIndex].lastCookedDate || null) : null
    };
-   if(editIndex !== null){
-     recipes[editIndex] = data;
-     editIndex = null;
-   } else {
-     recipes.push(data);
-   }
+   if(editIndex !== null){ recipes[editIndex] = data; editIndex = null; } 
+   else { recipes.push(data); }
    localStorage.setItem("recipes", JSON.stringify(recipes));
-   clearForm();
-   show("list");
-   renderList();
-   showToast("保存しました");
+   clearForm(); show("list"); renderList(); showToast("保存しました");
  }
  finish();
 }
 
 function editRecipe(i){
- let r=recipes[i];
- editIndex=i;
- formImage = r.image;
- show("add");
- title.value=r.title;
- group.value=r.group;
- sourceUrl.value = r.sourceUrl || "";
+ let r=recipes[i]; editIndex=i; formImage = r.image; show("add");
+ title.value=r.title; group.value=r.group; sourceUrl.value = r.sourceUrl || "";
  ingredientsArea.innerHTML="";
  r.ingredients.forEach(g=>{
   addGroup();
-  let gBox = ingredientsArea.lastChild;
-  gBox.querySelector("input").value = g.name;
-  let itemsDiv = gBox.querySelector(".items");
-  itemsDiv.innerHTML="";
+  let gBox = ingredientsArea.lastChild; gBox.querySelector("input").value = g.name;
+  let itemsDiv = gBox.querySelector(".items"); itemsDiv.innerHTML="";
   g.items.forEach(it=>{
    addItem(itemsDiv);
-   let row = itemsDiv.lastChild;
-   let inputs = row.querySelectorAll("input");
-   inputs[0].value = it.name;
-   inputs[1].value = it.amount;
+   let row = itemsDiv.lastChild; let inputs = row.querySelectorAll("input");
+   inputs[0].value = it.name; inputs[1].value = it.amount;
   });
  });
  stepsArea.innerHTML="";
@@ -661,16 +678,14 @@ function deleteRecipe(i){
  if(!confirm("このレシピを削除しますか？")) return;
  recipes.splice(i,1);
  localStorage.setItem("recipes",JSON.stringify(recipes));
- show("list");
- renderList();
+ show("list"); renderList();
 }
 
 function addGroup(){
  let div=document.createElement("div");
  div.className="groupBox";
  div.innerHTML=`<div style="display:flex; align-items:center; gap:5px;"><input placeholder="グループ名" style="flex:1;"><button class="delBtn" onclick="this.closest('.groupBox').remove()">×</button></div><div class="items"></div><button onclick="addItem(this)">材料追加</button>`;
- ingredientsArea.appendChild(div);
- addItem(div.querySelector(".items"));
+ ingredientsArea.appendChild(div); addItem(div.querySelector(".items"));
 }
 
 function addItem(container){
@@ -685,8 +700,7 @@ function addStep(){
  let div=document.createElement("div");
  div.className="stepBox";
  div.innerHTML=`<div class="stepNumber"></div><textarea></textarea><button class="delBtn" onclick="this.parentNode.remove();updateStepNumbers()">×</button>`;
- stepsArea.appendChild(div);
- updateStepNumbers();
+ stepsArea.appendChild(div); updateStepNumbers();
 }
 
 function updateStepNumbers(){
@@ -696,23 +710,16 @@ function updateStepNumbers(){
 }
 
 function clearForm(){
- sourceUrl.value="";
- title.value="";
- group.value="";
- imageFile.value="";
- ingredientsArea.innerHTML="";
- stepsArea.innerHTML="";
- editIndex=null;
- currentImage=null;
- formImage = null;
+ sourceUrl.value=""; title.value=""; group.value=""; imageFile.value="";
+ ingredientsArea.innerHTML=""; stepsArea.innerHTML="";
+ editIndex=null; currentImage=null; formImage = null;
 }
 
 renderList();
 
 function showToast(msg){
  let t=document.getElementById("toast");
- t.textContent=msg;
- t.classList.add("show");
+ t.textContent=msg; t.classList.add("show");
  setTimeout(()=>{ t.classList.remove("show"); },1500);
 }
 
@@ -720,9 +727,7 @@ function exportData(){
  let data = localStorage.getItem("recipes") || "[]";
  let blob = new Blob([data], {type:"application/json"});
  let a = document.createElement("a");
- a.href = URL.createObjectURL(blob);
- a.download = "recipes_backup.json";
- a.click();
+ a.href = URL.createObjectURL(blob); a.download = "recipes_backup.json"; a.click();
 }
 
 function importData(file){
@@ -731,8 +736,7 @@ function importData(file){
  reader.onload = e => {
   localStorage.setItem("recipes", e.target.result);
   recipes = JSON.parse(e.target.result);
-  renderList();
-  showToast("復元しました");
+  renderList(); showToast("復元しました");
  };
  reader.readAsText(file);
 }
