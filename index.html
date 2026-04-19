@@ -330,6 +330,24 @@ function toKatakana(str){ return str.replace(/[\u3041-\u3096]/g, ch => String.fr
 function exportData(){ let data = localStorage.getItem("recipes") || "[]"; let blob = new Blob([data], {type:"application/json"}); let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recipes_backup.json"; a.click(); }
 function importData(file){ if(!file) return; let reader = new FileReader(); reader.onload = e => { localStorage.setItem("recipes", e.target.result); recipes = JSON.parse(e.target.result); renderList(); showToast("復元しました"); }; reader.readAsText(file); }
 
+// 検証用コード：買い物リストの「追加」ボタンの状態をチェック
+const testBtn = document.querySelector('#page-shopping button:not(.delBtn)');
+
+if (testBtn) {
+  testBtn.addEventListener('touchstart', () => {
+    showToast("1. 指が触れました");
+  });
+
+  testBtn.addEventListener('touchend', () => {
+    showToast("2. 指が離れました");
+  });
+
+  testBtn.onclick = (e) => {
+    // 既存のaddManualなどを一旦止めて、到達確認だけ行う
+    e.stopPropagation();
+    alert("3. クリック成功！原因はJS内部ではありません。");
+  };
+}
 // 初期化
 show(0);
 </script>
