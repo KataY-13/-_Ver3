@@ -9,22 +9,24 @@
 body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; height: 100vh; }
 .container { height: 100%; display: flex; flex-direction: column; }
 
-/* スライド構造のための追加スタイル */
+/* スライド構造 */
 .main-viewport { flex: 1; overflow: hidden; position: relative; }
 .main-wrapper { display: flex; width: 400%; height: 100%; transition: transform 0.3s ease-out; }
 .page { width: 25%; height: 100%; overflow-y: auto; padding: 10px 10px 110px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
 
-/* 詳細画面のスライド化（pointer-eventsを追加） */
+/* 詳細画面：visibilityを追加してボタンの反応を確保 */
 #detail {
   position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 90px);
   background: #f2f2f7; z-index: 1000; overflow-y: auto;
   transition: transform 0.3s ease-out; transform: translateX(100%);
   padding: 10px 10px 110px; box-sizing: border-box;
-  pointer-events: none; /* 修正：隠れているときは下のボタンを邪魔しない */
+  pointer-events: none;
+  visibility: hidden; /* 修正：閉じているときは存在自体を「消す」ことで下のボタンを通す */
 }
 #detail.open {
   transform: translateX(0%);
-  pointer-events: auto; /* 修正：開いているときだけ操作可能 */
+  pointer-events: auto;
+  visibility: visible; /* 修正：開いたときだけ見える・触れるようにする */
 }
 
 .tabbar {
@@ -33,7 +35,7 @@ body { margin:0; font-family:sans-serif; background:#f2f2f7; overflow: hidden; h
 .tabbar button { flex:1; padding:0; font-size:18px; background: none; border: none; color: #999; }
 .tabbar button.active { color: #007aff; font-weight: bold; }
 
-/* 以下のスタイルはv1.10から一切変更なし */
+/* パーツデザイン */
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
 .card { background:#fff; border-radius:12px; overflow:hidden; font-size:11px; position: relative; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
 .card img { width:100%; height:80px; object-fit:cover; }
@@ -73,7 +75,7 @@ input[type="checkbox"] { transform:scale(1.3); }
   <div class="main-viewport" id="viewport">
     <div class="main-wrapper" id="mainWrapper">
       <div class="page" id="page-list">
-        <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:4px;">v1.19test2</div>
+        <div id="version" style="font-size:12px; color:#aaa; text-align:right; margin-bottom:4px;">v1.19</div>
         <div class="topbar" id="listBar">
           <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
           <button onclick="exportData()">バックアップ</button>
@@ -132,7 +134,7 @@ let stock = JSON.parse(localStorage.getItem("stockItems")||"[]");
 
 let editIndex=null, formImage = null, openGroups={}, currentFilter = 'all', currentPage = 0;
 
-/* --- スワイプ・スライド管理（v1.19 最終安定版） --- */
+/* --- スワイプ・スライド管理 --- */
 const wrapper = document.getElementById('mainWrapper');
 const detailEl = document.getElementById('detail');
 let startX = 0, startY = 0, moveX = 0, isScrolling = false, isHorizontal = false;
@@ -144,7 +146,6 @@ function show(idx) {
 }
 
 function updateUI() {
-  wrapper.style.transition = 'transform 0.3s ease-out';
   wrapper.style.transform = `translateX(${-currentPage * 25}%)`;
   document.querySelectorAll('.tabbar button').forEach((btn, i) => {
     btn.classList.toggle('active', i === currentPage);
@@ -154,77 +155,48 @@ function updateUI() {
   if(currentPage === 3) renderStock();
 }
 
-// タッチイベントの登録方法を変更（addEventListenerを使用）
-wrapper.addEventListener('touchstart', e => {
-  startX = e.touches[0].pageX;
-  startY = e.touches[0].pageY;
-  moveX = 0;
-  isScrolling = false;
-  isHorizontal = false;
-  wrapper.style.transition = 'none';
-}, { passive: true }); // passive: true でクリックへの干渉を防ぐ
-
-wrapper.addEventListener('touchmove', e => {
-  return;
+wrapper.ontouchstart = e => { startX = e.touches[0].pageX; startY = e.touches[0].pageY; moveX = 0; isScrolling = false; isHorizontal = false; wrapper.style.transition = 'none'; };
+wrapper.ontouchmove = e => {
   let dx = e.touches[0].pageX - startX;
   let dy = e.touches[0].pageY - startY;
-
   if (!isScrolling && !isHorizontal) {
-    if (Math.abs(dy) > Math.abs(dx)) {
-      isScrolling = true;
-    } else if (Math.abs(dx) > 20) { // 20px以上の移動でスワイプと判定
-      isHorizontal = true;
-    }
+    if (Math.abs(dy) > Math.abs(dx)) { isScrolling = true; }
+    else if (Math.abs(dx) > 15) { isHorizontal = true; } // 判定を少し厳格化
   }
-
   if (isHorizontal) {
-    // スワイプ中であることが確定した場合のみ、ブラウザの標準挙動を止める
-    // 注意: passive: true の場合は preventDefault が呼べないため、
-    // ここでは transform の更新のみを行い、クリックの邪魔をしません。
+    if (e.cancelable) e.preventDefault(); // スワイプ確定時のみキャンセル
     moveX = dx;
     let offset = -currentPage * (window.innerWidth) + (moveX * 1.1);
     wrapper.style.transform = `translateX(${offset}px)`;
   }
-}, { passive: true });
-
-wrapper.addEventListener('touchend', () => {
+};
+wrapper.ontouchend = () => {
   wrapper.style.transition = 'transform 0.3s ease-out';
-  if (isHorizontal && Math.abs(moveX) > 60) {
+  if (isHorizontal && Math.abs(moveX) > 50) {
     if (moveX > 0 && currentPage > 0) currentPage--;
     else if (moveX < 0 && currentPage < 3) currentPage++;
   }
   updateUI();
-});
+};
 
-// 詳細画面のスワイプも同様に修正
-detailEl.addEventListener('touchstart', e => {
-  startX = e.touches[0].pageX;
-  moveX = 0;
-  isHorizontal = false;
-  detailEl.style.transition = 'none';
-}, { passive: true });
-
-detailEl.addEventListener('touchmove', e => {
+detailEl.ontouchstart = e => { startX = e.touches[0].pageX; moveX = 0; isHorizontal = false; detailEl.style.transition = 'none'; };
+detailEl.ontouchmove = e => {
   let dx = e.touches[0].pageX - startX;
   if (!isHorizontal && dx > 20) isHorizontal = true;
-  if (isHorizontal && dx > 0) {
-    moveX = dx;
-    detailEl.style.transform = `translateX(${moveX * 1.1}px)`;
-  }
-}, { passive: true });
-
-detailEl.addEventListener('touchend', () => {
+  if (isHorizontal && dx > 0) { if (e.cancelable) e.preventDefault(); moveX = dx; detailEl.style.transform = `translateX(${moveX * 1.1}px)`; }
+};
+detailEl.ontouchend = () => {
   detailEl.style.transition = 'transform 0.3s ease-out';
   if (moveX > 100) closeDetail();
   else detailEl.style.transform = "translateX(0%)";
-});
+};
 
 function closeDetail() { 
   detailEl.classList.remove('open');
   detailEl.style.transform = "translateX(100%)"; 
 }
 
-/* --- 既存ロジック --- */
+/* --- レシピロジック --- */
 function renderList(){
   const list = document.getElementById("list");
   list.innerHTML="";
@@ -331,25 +303,6 @@ function toKatakana(str){ return str.replace(/[\u3041-\u3096]/g, ch => String.fr
 function exportData(){ let data = localStorage.getItem("recipes") || "[]"; let blob = new Blob([data], {type:"application/json"}); let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recipes_backup.json"; a.click(); }
 function importData(file){ if(!file) return; let reader = new FileReader(); reader.onload = e => { localStorage.setItem("recipes", e.target.result); recipes = JSON.parse(e.target.result); renderList(); showToast("復元しました"); }; reader.readAsText(file); }
 
-// 検証用コード：買い物リストの「追加」ボタンの状態をチェック
-const testBtn = document.querySelector('#page-shopping button:not(.delBtn)');
-
-if (testBtn) {
-  testBtn.addEventListener('touchstart', () => {
-    showToast("1. 指が触れました");
-  });
-
-  testBtn.addEventListener('touchend', () => {
-    showToast("2. 指が離れました");
-  });
-
-  testBtn.onclick = (e) => {
-    // 既存のaddManualなどを一旦止めて、到達確認だけ行う
-    e.stopPropagation();
-    alert("3. クリック成功！原因はJS内部ではありません。");
-  };
-}
-// 初期化
 show(0);
 </script>
 </body>
