@@ -5,6 +5,25 @@
 <title>レシピアプリ</title>
 
 <style>
+/* ===== スクロールバーのカスタマイズ ===== */
+/* スクロールバー全体の幅 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+/* スクロールバーの軌道（背景） */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* 動くバーの部分（つまみ） */
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2); /* 半透明のグレー */
+  border-radius: 10px;
+}
+/* ホバー時や掴んだ時に少し濃くする */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
@@ -30,12 +49,11 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .card { background:#fff; border-radius:8px; overflow:hidden; font-size:11px; }
 .card img { width:100%; height:80px; object-fit:cover; }
 
-/* タイトルと情報のエリア */
 .card-info {
   padding: 4px;
   display: flex;
   flex-direction: column;
-  min-height: 40px; /* タイトルが長くても短くても高さを一定にする */
+  min-height: 40px; 
 }
 .card-title {
   text-align: left;
@@ -278,7 +296,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.06
+ ver.4.07
 </div>
 
 <div class="topbar" id="listBar">
@@ -450,7 +468,6 @@ function markAsCooked(index) {
   const r = recipes[index];
   r.cookCount = (r.cookCount || 0) + 1;
   const now = new Date();
-  // 常に YYYY/MM/DD 形式で保存
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
