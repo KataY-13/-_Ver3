@@ -5,6 +5,11 @@
 <title>レシピアプリ</title>
 
 <style>
+/* スクロールバー設定 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 10px; }
+
 body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .container { padding:10px 10px 110px; }
 
@@ -30,12 +35,11 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .card { background:#fff; border-radius:8px; overflow:hidden; font-size:11px; }
 .card img { width:100%; height:80px; object-fit:cover; }
 
-/* タイトルと情報のエリア */
 .card-info {
   padding: 4px;
   display: flex;
   flex-direction: column;
-  min-height: 40px; /* タイトルが長くても短くても高さを一定にする */
+  min-height: 40px; 
 }
 .card-title {
   text-align: left;
@@ -85,15 +89,24 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .stepNumber { width:25px; text-align:right; }
 .stepBox textarea { flex:1; min-height:80px; }
 
+/* 買い物リストのスタイルの微調整 */
 li {
  list-style:none;
  background:#fff;
  margin:6px 0;
- padding:10px;
+ padding:0; /* paddingを内側のクリック領域へ移動 */
  border-radius:8px;
  display:flex;
  align-items:center;
+ overflow:hidden;
+}
+.shop-item-content {
+ flex:1;
+ display:flex;
+ align-items:center;
  gap:10px;
+ padding:10px; /* ここでタップ範囲を確保 */
+ cursor:pointer;
 }
 
 .gray { color:#aaa; text-decoration:line-through; }
@@ -105,7 +118,6 @@ li {
  gap:8px;
   align-items:center;
 }
-/* ===== 全体をアプリ風 ===== */
 body {
  background:#f2f2f7; 
 }
@@ -278,7 +290,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.06
+ ver.4.08
 </div>
 
 <div class="topbar" id="listBar">
@@ -450,7 +462,6 @@ function markAsCooked(index) {
   const r = recipes[index];
   r.cookCount = (r.cookCount || 0) + 1;
   const now = new Date();
-  // 常に YYYY/MM/DD 形式で保存
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
@@ -631,8 +642,14 @@ function renderShopping(){
  shopping.sort((a,b)=>a.checked - b.checked);
  shopping.forEach((s,i)=>{
   let li=document.createElement("li");
-  li.className=s.checked?"gray":"";
-  li.innerHTML=`<input type="checkbox" ${s.checked?"checked":""} onchange="toggle(${i})">${s.name} (${s.amount})<button onclick="removeItem(${i})" style="margin-left:auto;">×</button>`;
+  // 行全体をクリック可能にし、中身をcontent divでラップ
+  li.innerHTML=`
+    <div class="shop-item-content ${s.checked?'gray':''}" onclick="toggle(${i})">
+      <input type="checkbox" ${s.checked?"checked":""} onclick="event.stopPropagation(); toggle(${i});">
+      <span>${s.name} (${s.amount})</span>
+    </div>
+    <button onclick="event.stopPropagation(); removeItem(${i})" style="margin-right:10px;">×</button>
+  `;
   shopList.appendChild(li);
  });
 }
@@ -668,7 +685,7 @@ function renderStock(){
  sl.innerHTML = "";
  stock.forEach((item, i) => {
   let li = document.createElement("li");
-  li.innerHTML = `<span>${item}</span><button onclick="removeStock(${i})" style="margin-left:auto;">×</button>`;
+  li.innerHTML = `<span style="padding:10px;">${item}</span><button onclick="removeStock(${i})" style="margin-left:auto; margin-right:10px;">×</button>`;
   sl.appendChild(li);
  });
 }
