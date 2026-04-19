@@ -159,6 +159,7 @@ input, textarea {
  opacity:0;
  transition:opacity 0.3s, bottom 0.3s;
  pointer-events:none;
+ z-index: 5000;
 }
 
 #toast.show {
@@ -215,6 +216,16 @@ input, textarea {
   background: #007aff !important;
   color: #fff !important;
 }
+
+/* 詳細用お気に入りボタンの個別スタイル */
+.fav-detail-btn {
+  width: 100%;
+  font-weight: bold;
+}
+.fav-detail-btn.active {
+  background: #fff0b3; /* 薄い黄色 */
+  color: #cca300;
+}
 </style>
 </head>
 
@@ -227,7 +238,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.00
+ ver.4.01
 </div>
 
 <div class="topbar" id="listBar">
@@ -320,7 +331,7 @@ let currentPage = 'list';
 
 /* 画面切り替え */
 function show(p){
-  currentPage = p; // 現在のページを保持
+  currentPage = p; 
   list.classList.add("hidden");
   detail.classList.add("hidden");
   add.classList.add("hidden");
@@ -341,7 +352,6 @@ function show(p){
     renderStock(); 
   }
   
-  // タブの見た目も更新（activeなボタンを判別しやすくするため）
   document.querySelectorAll('.tabbar button').forEach(btn => {
     btn.style.color = btn.innerText === getTabName(p) ? '#007aff' : '#999';
   });
@@ -354,7 +364,7 @@ function getTabName(p) {
   if(p==='stock') return '在庫';
 }
 
-/* --- スワイプ機能の実装 (ver.4.00) --- */
+/* --- スワイプ機能の実装 --- */
 window.addEventListener('touchstart', (e) => {
   startX = e.touches[0].pageX;
   startY = e.touches[0].pageY;
@@ -366,28 +376,32 @@ window.addEventListener('touchend', (e) => {
   let diffX = endX - startX;
   let diffY = endY - startY;
 
-  // 縦スワイプ防止 & 一定距離(50px)以上のスワイプのみ反応
   if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-    
-    // 1. 詳細画面が表示されている場合
     if (!detail.classList.contains("hidden")) {
-      if (diffX > 0) { // 右スワイプ
-        show('list'); // 一覧に戻る
-      }
-      return; // 詳細画面時はここで終了
+      if (diffX > 0) show('list'); 
+      return;
     }
 
-    // 2. 通常のタブ切り替え
     let currentIndex = pageOrder.indexOf(currentPage);
-    if (diffX > 0) { // 右スワイプ -> 左の画面へ
+    if (diffX > 0) {
       let nextIndex = (currentIndex - 1 + pageOrder.length) % pageOrder.length;
       show(pageOrder[nextIndex]);
-    } else { // 左スワイプ -> 右の画面へ
+    } else {
       let nextIndex = (currentIndex + 1) % pageOrder.length;
       show(pageOrder[nextIndex]);
     }
   }
 }, { passive: true });
+
+/* --- お気に入り機能追加 (詳細画面用) --- */
+function toggleFavoriteInDetail(index) {
+  recipes[index].favorite = !recipes[index].favorite;
+  localStorage.setItem("recipes", JSON.stringify(recipes));
+  // 詳細画面を再描画してボタン表示を更新
+  detailView(index);
+  // 裏側で一覧の描画も準備しておく
+  renderList();
+}
 
 /* --- 以下、ベースコードの機能 --- */
 
@@ -477,7 +491,14 @@ function detailView(i){
  let html = `<div class="topbar"><div style="flex:1; text-align:center; font-weight:bold;">${r.title}</div></div>`;
  detail.classList.remove("hidden");
  list.classList.add("hidden");
+ 
  if(r.sourceUrl) html += `<a href="${r.sourceUrl}" target="_blank" class="linkBtn">レシピ元を見る</a>`;
+ 
+ // お気に入りボタンの追加
+ const favBtnText = r.favorite ? "★ お気に入りから外す" : "☆ お気に入りに追加";
+ const favBtnClass = r.favorite ? "fav-detail-btn active" : "fav-detail-btn";
+ html += `<button class="${favBtnClass}" onclick="toggleFavoriteInDetail(${i})">${favBtnText}</button>`;
+ 
  if(r.image) html+=`<img src="${r.image}" class="detail-img">`;
  r.ingredients.forEach(g=>{
   html+=`<h3>${g.name}</h3>`;
@@ -720,7 +741,6 @@ function toKatakana(str){
  return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
 }
 
-// 初期タブ表示の見た目調整
 show('list');
 </script>
 <div id="toast"></div>
