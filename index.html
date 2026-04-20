@@ -73,11 +73,10 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  box-sizing:border-box;
 }
 
-.row { display:flex; gap:5px; margin-top:5px; flex-wrap: wrap; }
+.row { display:flex; gap:5px; margin-top:5px; flex-wrap: wrap; align-items: center; }
 .row input:nth-child(1){ flex:4; }
 .row input:nth-child(2){ flex:3; }
 
-/* 単位チップのコンテナ */
 .unit-tips {
   display: flex;
   flex-wrap: wrap;
@@ -102,11 +101,25 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
   color: #fff;
 }
 
+/* 削除ボタン（×）のグレー丸型スタイル */
 .delBtn {
- width:1.2em;
- min-width:28px;
- height:44px;
- font-size:14px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 24px;
+  background: #ccc;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.delBtn:active {
+  background: #bbb;
 }
 
 .groupBox { background:#fff; padding:8px; margin:8px 0; border-radius:8px; }
@@ -143,6 +156,38 @@ li {
  gap:8px;
   align-items:center;
 }
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+#search {
+  width: 100%;
+  padding-right: 35px;
+}
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background: #ccc;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.8;
+  display: none;
+}
+.clear-search-btn:active {
+  background: #999;
+}
+
 body {
  background:#f2f2f7; 
 }
@@ -156,7 +201,7 @@ h2, h3, h4 {
  margin:8px 0;
 }
 
-button:not(.tabbar button) {
+button:not(.tabbar button, .clear-search-btn, .delBtn) {
  min-height:44px;
  font-size:16px;
  padding:10px 12px;
@@ -165,17 +210,21 @@ button:not(.tabbar button) {
  background:#e5f0ff;
  color:#007aff;
 }
-button:not(.tabbar button) + button {
+button:not(.tabbar button, .clear-search-btn, .delBtn) + button {
  margin-top:8px;
 }
  
-button:active {
+button:active:not(.delBtn) {
  opacity:0.7;
 }
 
-.delBtn {
- background:#ff3b30;
- color:#fff;
+.full-width-btn {
+  width: 100%;
+  margin-top: 20px !important;
+  background: #007aff !important;
+  color: #fff !important;
+  font-weight: bold;
+  font-size: 18px !important;
 }
 
 input[type="checkbox"] {
@@ -229,7 +278,6 @@ input, textarea {
 }
 .card { position: relative; }
 
-/* 星マークの縁取り追加 */
 .fav-star {
   position: absolute;
   top: 5px;
@@ -238,7 +286,6 @@ input, textarea {
   color: #ccc; 
   cursor: pointer;
   z-index: 10;
-  /* 黒の縁取りを追加 */
   text-shadow: 
     1px 1px 0 #000, -1px -1px 0 #000,
     -1px 1px 0 #000, 1px -1px 0 #000,
@@ -309,6 +356,21 @@ input, textarea {
   text-align: center;
   margin-top: 4px;
 }
+
+/* 買い物リストの削除ボタン調整 */
+.shop-del-btn {
+  background: #ccc;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-size: 16px;
+  margin-right: 10px;
+}
 </style>
 </head>
 
@@ -321,11 +383,14 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.11
+ ver.4.15
 </div>
 
 <div class="topbar" id="listBar">
-  <input id="search" placeholder="検索" oninput="renderList()" style="flex:1;">
+  <div class="search-wrapper">
+    <input id="search" placeholder="検索" oninput="renderList()">
+    <div id="clearSearch" class="clear-search-btn" onclick="clearSearchInput()">×</div>
+  </div>
   
   <button onclick="exportData()">バックアップ</button>
 
@@ -357,7 +422,7 @@ input, textarea {
 <div class="topbar">
   <h3 style="margin:0;">レシピ登録</h3>
   <div style="display:flex; gap:6px;">
-    <button onclick="saveRecipe()">保存</button>
+    <button onclick="show('list'); clearForm();">戻る</button>
     <button onclick="clearForm()">クリア</button>
   </div>
 </div>
@@ -374,6 +439,8 @@ input, textarea {
 <h4>作り方</h4>
 <div id="stepsArea"></div>
 <button onclick="addStep()">工程追加</button>
+
+<button class="full-width-btn" onclick="saveRecipe()">レシピを保存する</button>
 </div>
 
 <div id="shopping" class="hidden">
@@ -537,19 +604,48 @@ document.getElementById("imageFile").addEventListener("change", function(e){
  reader.readAsDataURL(file);
 });
 
+function clearSearchInput() {
+  const searchInput = document.getElementById("search");
+  searchInput.value = "";
+  renderList();
+  searchInput.focus();
+}
+
 function renderList(){
  list.innerHTML="";
- let key = toKatakana(search.value.toLowerCase());
+ let searchVal = search.value;
+ let key = toKatakana(searchVal.toLowerCase());
  let sortType = document.getElementById("sortSelect").value;
  let groups={};
+
+ document.getElementById("clearSearch").style.display = searchVal === "" ? "none" : "flex";
  
  recipes.forEach((r,i)=>{
-   let hit = toKatakana(r.title.toLowerCase()).includes(key);
+   let titleHit = toKatakana(r.title.toLowerCase()).includes(key);
+   let ingHit = false;
+   if(r.ingredients){
+     r.ingredients.forEach(igGroup => {
+       if(igGroup.items){
+         igGroup.items.forEach(item => {
+           if(toKatakana(item.name.toLowerCase()).includes(key)){
+             ingHit = true;
+           }
+         });
+       }
+     });
+   }
+   
+   let hit = titleHit || ingHit;
    if(currentFilter === 'fav' && !r.favorite) hit = false;
    if(!hit) return;
+   
    let g = (r.group || "").trim() || "未分類";
    if(!groups[g]) groups[g]=[];
    groups[g].push({r,i});
+   
+   if(key !== "" && hit) {
+     openGroups[g] = true;
+   }
  });
 
  Object.keys(groups).sort().forEach(g=>{
@@ -678,7 +774,7 @@ function renderShopping(){
       <input type="checkbox" ${s.checked?"checked":""} onclick="event.stopPropagation(); toggle(${i});">
       <span>${s.name} (${s.amount})</span>
     </div>
-    <button onclick="event.stopPropagation(); removeItem(${i})" style="margin-right:10px;">×</button>
+    <button class="delBtn shop-del-btn" onclick="event.stopPropagation(); removeItem(${i})">×</button>
   `;
   shopList.appendChild(li);
  });
@@ -715,7 +811,7 @@ function renderStock(){
  sl.innerHTML = "";
  stock.forEach((item, i) => {
   let li = document.createElement("li");
-  li.innerHTML = `<span style="padding:10px;">${item}</span><button onclick="removeStock(${i})" style="margin-left:auto; margin-right:10px;">×</button>`;
+  li.innerHTML = `<span style="padding:10px;">${item}</span><button class="delBtn" onclick="removeStock(${i})" style="margin-left:auto; margin-right:10px;">×</button>`;
   sl.appendChild(li);
  });
 }
@@ -805,7 +901,6 @@ function addItem(container){
  container.appendChild(row);
 }
 
-// 単位入力サポート機能
 function showUnitTips(inputEl) {
   hideUnitTips();
   const units = ["大さじ", "小さじ", "g", "ml", "個", "本", "枚", "パック", "少々", "適量"];
