@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Recipe App Pro</title>
+<title>Recipe Pro Zenith</title>
 <style>
 :root {
     --primary: #007aff; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --text-sub: #8e8e93;
@@ -13,43 +13,43 @@
     :root { --primary: #0a84ff; --bg: #000000; --card: #1c1c1e; --text: #ffffff; --text-sub: #8e8e93; }
 }
 body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); color:var(--text); -webkit-tap-highlight-color:transparent; }
-.container { padding: 16px 16px calc(100px + var(--safe-bottom)); max-width:600px; margin:0 auto; }
+.container { padding: 16px 16px calc(120px + var(--safe-bottom)); max-width:600px; margin:0 auto; }
 
-/* 一覧グリッドの修正 */
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.card { background: var(--card); border-radius: 16px; overflow: hidden; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
-.card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #ddd; border-bottom: 1px solid rgba(0,0,0,0.05); }
-.card-title { padding: 10px; font-size: 14px; font-weight: 600; line-height: 1.3; height: 2.6em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* 一覧：カードデザイン */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.card { background: var(--card); border-radius: 20px; overflow: hidden; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #ddd; display: block; }
+.card-title { padding: 12px; font-size: 14px; font-weight: 700; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
 /* お気に入りボタン */
-.fav-btn { position: absolute; top: 0; right: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; z-index: 5; background: linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.3) 100%); }
-.fav-btn::after { content: '★'; font-size: 22px; color: #fff; filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); }
+.fav-btn { position: absolute; top: 0; right: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; z-index: 10; background: linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.3) 100%); }
+.fav-btn::after { content: '★'; font-size: 24px; color: #fff; filter: drop-shadow(0 0 3px rgba(0,0,0,0.5)); }
 .fav-btn.active::after { color: #ffcc00; }
 
-/* 詳細画面の表示 */
-.detail-content h1 { font-size: 24px; margin: 16px 0 8px; }
-.detail-img { width: 100%; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.section-title { font-size: 18px; font-weight: bold; margin: 24px 0 12px; padding-left: 8px; border-left: 4px solid var(--primary); }
-.ing-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-.step-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start; }
-.step-num { background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
-
-/* 下タブ：iPhoneのバー対策（padding-bottomを強化） */
-.tabbar { position: fixed; bottom: 0; width: 100%; display: flex; background: rgba(var(--card), 0.8); backdrop-filter: blur(20px); border-top: 0.5px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + var(--safe-bottom)); z-index: 1000; }
-.tab-item { flex: 1; padding: 12px 0; text-align: center; background: none; border: none; color: var(--text-sub); font-size: 10px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.tab-item span { font-size: 20px; }
+/* 下タブ：iPhoneのバー回避（高め設定） */
+.tabbar { position: fixed; bottom: 0; width: 100%; display: flex; background: rgba(var(--card), 0.85); backdrop-filter: blur(25px); border-top: 0.5px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + var(--safe-bottom)); z-index: 1000; }
+.tab-item { flex: 1; padding: 14px 0; text-align: center; background: none; border: none; color: var(--text-sub); font-size: 10px; font-weight: bold; }
+.tab-item span { display: block; font-size: 24px; margin-bottom: 4px; }
 .tab-item.active { color: var(--primary); }
 
-.hidden { display: none; }
-.btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-.btn-primary { background: var(--primary); color: #fff; }
+/* 入力欄 & ボタン */
+input, textarea { width:100%; padding:14px; border-radius:14px; border:1px solid rgba(0,0,0,0.1); background:var(--card); color:var(--text); box-sizing:border-box; font-size:16px; margin-bottom:12px; }
+.main-btn { width:100%; padding:18px; background:var(--primary); color:#fff; border:none; border-radius:18px; font-size:16px; font-weight:bold; cursor:pointer; }
+.btn-sub { background:none; border:none; color:var(--primary); padding:12px; font-size:14px; cursor:pointer; }
+.hidden { display:none; }
+
+/* 詳細表示 */
+.detail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; aspect-ratio: 4/3; object-fit: cover; }
+.section-title { font-size: 18px; font-weight: bold; margin: 25px 0 10px; border-left: 5px solid var(--primary); padding-left: 12px; }
+.step-row { display: flex; gap: 15px; margin-bottom: 15px; }
+.step-num { background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
 </style>
 </head>
 <body>
 
 <div class="container">
     <div id="p-list">
-        <input type="search" id="q" placeholder="レシピを検索..." oninput="render()" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:16px; font-size:16px;">
+        <input type="search" id="q" placeholder="レシピを検索..." oninput="render()">
         <div id="list" class="grid"></div>
     </div>
 
@@ -57,168 +57,123 @@ body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); co
 
     <div id="p-edit" class="hidden">
         <h2 id="edit-title">レシピ作成</h2>
-        <img id="img-prev" style="width:100%; border-radius:12px; margin-bottom:12px; display:none;">
-        <input type="file" id="f-file" accept="image/*" style="margin-bottom:16px;">
-        <input id="f-name" placeholder="料理名" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:16px; margin-bottom:12px;">
+        <img id="img-prev" style="width:100%; border-radius:18px; margin-bottom:15px; display:none;">
+        <input type="file" id="f-file" accept="image/*">
+        <input id="f-name" placeholder="料理名">
         <div id="f-ings"></div>
-        <button onclick="addIngGroup()" style="margin-bottom:20px;">+ グループ追加</button>
+        <button class="btn-sub" onclick="addIngGroup()">+ 材料グループを追加</button>
         <div id="f-steps"></div>
-        <button onclick="addStepField()" style="margin-bottom:20px;">+ 手順追加</button>
-        <button class="btn btn-primary" onclick="save()">保存する</button>
-        <button class="btn" onclick="nav('list')">キャンセル</button>
+        <button class="btn-sub" onclick="addStepField()">+ 手順を追加</button>
+        <button class="main-btn" onclick="save()">保存する</button>
+        <button class="btn-sub" style="width:100%; color:var(--text-sub);" onclick="nav('list')">キャンセル</button>
     </div>
 </div>
 
 <nav class="tabbar">
     <button class="tab-item active" onclick="nav('list')"><span>📖</span>一覧</button>
     <button class="tab-item" onclick="initAdd()"><span>➕</span>登録</button>
+    <button class="tab-item" onclick="exportData()"><span>💾</span>保存</button>
 </nav>
 
 <script>
 let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
-let currentIdx = null;
-let currentImg = null;
+let currentIdx = null; let currentImg = null;
 
 function nav(p) {
     document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
     document.getElementById('p-' + p).classList.remove('hidden');
-    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-item').forEach((t, i) => t.classList.toggle('active', ['list','edit','export'][i] === p || (p === 'edit' && i === 1)));
+    if(p === 'list') render();
     window.scrollTo(0,0);
 }
 
 function render() {
-    const grid = document.getElementById('list');
-    grid.innerHTML = "";
+    const grid = document.getElementById('list'); grid.innerHTML = "";
     const q = document.getElementById('q').value.toLowerCase();
     recipes.forEach((r, i) => {
         if(q && !r.title.toLowerCase().includes(q)) return;
-        const div = document.createElement('div');
-        div.className = "card";
-        div.innerHTML = `
-            <div class="fav-btn ${r.fav?'active':''}" onclick="event.stopPropagation(); recipes[${i}].fav=!recipes[${i}].fav; saveAll(); render();"></div>
-            <img src="${r.img || ''}">
-            <div class="card-title">${r.title || '無題のレシピ'}</div>
-        `;
+        const div = document.createElement('div'); div.className = "card";
+        div.innerHTML = `<div class="fav-btn ${r.fav?'active':''}" onclick="event.stopPropagation(); recipes[${i}].fav=!recipes[${i}].fav; saveAll(); render();"></div>
+                         <img src="${r.img||''}"> <div class="card-title">${r.title||'無題'}</div>`;
         div.onclick = () => showDetail(i);
         grid.appendChild(div);
     });
 }
 
 function showDetail(i) {
-    currentIdx = i;
-    const r = recipes[i];
-    const d = document.getElementById('p-detail');
-    nav('detail');
-    
-    let ingsHtml = "";
-    r.ings.forEach(g => {
-        ingsHtml += `<div class="section-title">${g.name || '材料'}</div>`;
-        g.items.forEach(it => {
-            ingsHtml += `<div class="ing-row"><span>${it.name}</span><span>${it.amount}</span></div>`;
-        });
-    });
-
-    let stepsHtml = r.steps.map((s, idx) => `
-        <div class="step-row"><div class="step-num">${idx+1}</div><div>${s}</div></div>
-    `).join('');
-
-    d.innerHTML = `
-        <img src="${r.img || ''}" class="detail-img">
-        <h1>${r.title}</h1>
-        ${ingsHtml}
-        <div class="section-title">作り方</div>
-        ${stepsHtml}
-        <button class="btn btn-primary" onclick="edit(${i})">編集する</button>
-        <button class="btn" onclick="nav('list')">一覧に戻る</button>
-        <button class="btn" style="color:red; background:none; font-size:14px;" onclick="if(confirm('消去しますか？')){recipes.splice(${i},1);saveAll();nav('list');}">レシピを削除</button>
-    `;
+    currentIdx = i; const r = recipes[i]; const d = document.getElementById('p-detail'); nav('detail');
+    let ingsHtml = r.ings.map(g => `<div class="section-title">${g.name||'材料'}</div>` + g.items.map(it => `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.05);"><span>${it.name}</span><span>${it.amount}</span></div>`).join('')).join('');
+    let stepsHtml = r.steps.map((s, idx) => `<div class="step-row"><div class="step-num">${idx+1}</div><div>${s}</div></div>`).join('');
+    d.innerHTML = `<img src="${r.img||''}" class="detail-img"><h1>${r.title}</h1>${ingsHtml}<div class="section-title">作り方</div>${stepsHtml}
+                   <button class="main-btn" style="margin-top:30px;" onclick="edit(${i})">編集する</button>
+                   <button class="btn-sub" style="width:100%; color:red;" onclick="removeRecipe(${i})">削除する</button>
+                   <button class="btn-sub" style="width:100%; color:var(--text-sub);" onclick="nav('list')">一覧に戻る</button>`;
 }
 
-// （以下、編集・保存・画像処理などは前述のバグを修正した状態で内包）
-function initAdd() {
-    currentIdx = null; currentImg = null;
-    document.getElementById('edit-title').innerText = "レシピ作成";
-    document.getElementById('f-name').value = "";
-    document.getElementById('img-prev').style.display = "none";
-    document.getElementById('f-ings').innerHTML = "";
-    document.getElementById('f-steps').innerHTML = "";
-    addIngGroup(); addStepField();
-    nav('edit');
-}
-
-function addIngGroup() {
-    const div = document.createElement('div');
-    div.className = "ing-group-form";
-    div.innerHTML = `<input class="g-name" placeholder="グループ名" style="font-weight:bold; margin-top:10px;">
-                     <div class="g-items-form"></div>
-                     <button onclick="addIngField(this.previousSibling)">+ 材料追加</button>`;
-    document.getElementById('f-ings').appendChild(div);
-    addIngField(div.querySelector('.g-items-form'));
-    return div;
-}
-
-function addIngField(target, name="", amt="") {
-    const div = document.createElement('div');
-    div.style.display = "flex"; div.style.gap = "8px";
-    div.innerHTML = `<input class="i-name" placeholder="品名" value="${name}" style="flex:2">
-                     <input class="i-amt" placeholder="分量" value="${amt}" style="flex:1">`;
-    target.appendChild(div);
-}
-
-function addStepField(val="") {
-    const ta = document.createElement('textarea');
-    ta.className = "s-text"; ta.placeholder = "手順を入力"; ta.value = val;
-    ta.style.width = "100%"; ta.style.height = "80px"; ta.style.marginBottom = "10px";
-    document.getElementById('f-steps').appendChild(ta);
-}
-
-function save() {
-    const r = {
-        title: document.getElementById('f-name').value,
-        img: currentImg,
-        ings: Array.from(document.querySelectorAll('.ing-group-form')).map(g => ({
-            name: g.querySelector('.g-name').value,
-            items: Array.from(g.querySelectorAll('.g-items-form > div')).map(i => ({
-                name: i.querySelector('.i-name').value,
-                amount: i.querySelector('.i-amt').value
-            }))
-        })),
-        steps: Array.from(document.querySelectorAll('.s-text')).map(s => s.value),
-        fav: currentIdx !== null ? recipes[currentIdx].fav : false
-    };
-    if(currentIdx !== null) recipes[currentIdx] = r; else recipes.push(r);
-    saveAll(); nav('list');
-}
-
-function saveAll() { localStorage.setItem('recipes', JSON.stringify(recipes)); }
+function removeRecipe(i) { if(confirm('本当にこのレシピを削除しますか？')) { recipes.splice(i, 1); saveAll(); nav('list'); } }
 
 document.getElementById('f-file').onchange = e => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
-        currentImg = ev.target.result;
-        const p = document.getElementById('img-prev'); p.src = currentImg; p.style.display = "block";
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas'); const max = 600;
+            const scale = max / Math.max(img.width, img.height);
+            canvas.width = img.width * scale; canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0,0,canvas.width,canvas.height);
+            currentImg = canvas.toDataURL('image/jpeg', 0.8);
+            const p = document.getElementById('img-prev'); p.src = currentImg; p.style.display = "block";
+        };
+        img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
 };
 
-function edit(i) {
-    const r = recipes[i]; currentIdx = i; currentImg = r.img;
-    nav('edit');
-    document.getElementById('f-name').value = r.title;
-    document.getElementById('f-ings').innerHTML = "";
-    r.ings.forEach(g => {
-        const div = addIngGroup();
-        div.querySelector('.g-name').value = g.name;
-        div.querySelector('.g-items-form').innerHTML = "";
-        g.items.forEach(it => addIngField(div.querySelector('.g-items-form'), it.name, it.amount));
-    });
-    document.getElementById('f-steps').innerHTML = "";
-    r.steps.forEach(s => addStepField(s));
-    if(r.img) { const p = document.getElementById('img-prev'); p.src = r.img; p.style.display = "block"; }
+function initAdd() { currentIdx = null; currentImg = null; document.getElementById('edit-title').innerText = "レシピ作成"; document.getElementById('f-name').value = ""; document.getElementById('f-ings').innerHTML = ""; document.getElementById('f-steps').innerHTML = ""; document.getElementById('img-prev').style.display = "none"; addIngGroup(); addStepField(); nav('edit'); }
+
+function addIngGroup() {
+    const div = document.createElement('div'); div.className = "ing-group-form";
+    div.innerHTML = `<input class="g-name" placeholder="材料グループ (例: ●タレ)"> <div class="g-items-form"></div> <button class="btn-sub" onclick="addIngField(this.previousSibling)">+ 材料追加</button>`;
+    document.getElementById('f-ings').appendChild(div); addIngField(div.querySelector('.g-items-form')); return div;
 }
 
-nav('list'); render();
+function addIngField(target, n="", a="") {
+    const div = document.createElement('div'); div.style.display="flex"; div.style.gap="8px";
+    div.innerHTML = `<input class="i-name" placeholder="品名" value="${n}" style="flex:2"> <input class="i-amt" placeholder="分量" value="${a}" style="flex:1"> <button onclick="this.parentElement.remove()" style="border:none; background:none; padding:10px;">×</button>`;
+    target.appendChild(div);
+}
+
+function addStepField(v="") {
+    const div = document.createElement('div'); div.style.display="flex"; div.style.gap="8px"; div.style.alignItems="flex-start";
+    div.innerHTML = `<textarea class="s-text" placeholder="手順を入力">${v}</textarea> <button onclick="this.parentElement.remove()" style="border:none; background:none; padding:10px;">×</button>`;
+    document.getElementById('f-steps').appendChild(div);
+}
+
+function save() {
+    const r = {
+        title: document.getElementById('f-name').value || "無題のレシピ",
+        img: currentImg,
+        ings: Array.from(document.querySelectorAll('.ing-group-form')).map(g => ({ name: g.querySelector('.g-name').value || "材料", items: Array.from(g.querySelectorAll('.i-name')).map((n, idx) => ({ name: n.value, amount: g.querySelectorAll('.i-amt')[idx].value })).filter(it => it.name) })),
+        steps: Array.from(document.querySelectorAll('.s-text')).map(s => s.value).filter(s => s),
+        fav: (currentIdx !== null) ? recipes[currentIdx].fav : false
+    };
+    if(currentIdx !== null) recipes[currentIdx] = r; else recipes.push(r);
+    saveAll(); currentIdx = null; nav('list');
+}
+
+function edit(i) {
+    currentIdx = i; const r = recipes[i]; currentImg = r.img; nav('edit');
+    document.getElementById('edit-title').innerText = "レシピ編集"; document.getElementById('f-name').value = r.title;
+    document.getElementById('f-ings').innerHTML = ""; r.ings.forEach(g => { const gd = addIngGroup(); gd.querySelector('.g-name').value = g.name; gd.querySelector('.g-items-form').innerHTML = ""; g.items.forEach(it => addIngField(gd.querySelector('.g-items-form'), it.name, it.amount)); });
+    document.getElementById('f-steps').innerHTML = ""; r.steps.forEach(s => addStepField(s));
+    const p = document.getElementById('img-prev'); if(r.img){ p.src=r.img; p.style.display="block"; }else{ p.style.display="none"; }
+}
+
+function saveAll() { try { localStorage.setItem('recipes', JSON.stringify(recipes)); } catch(e) { alert("容量不足です。画像を減らすか、古いレシピを削除してください。"); } }
+function exportData() { const blob = new Blob([JSON.stringify(recipes)], {type: "application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `recipes_backup_${new Date().toLocaleDateString()}.json`; a.click(); }
+
+nav('list');
 </script>
 </body>
 </html>
