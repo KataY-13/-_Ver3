@@ -72,9 +72,34 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
  box-sizing:border-box;
 }
 
-.row { display:flex; gap:5px; margin-top:5px; }
+.row { display:flex; gap:5px; margin-top:5px; flex-wrap: wrap; }
 .row input:nth-child(1){ flex:4; }
 .row input:nth-child(2){ flex:3; }
+
+/* 単位チップのコンテナ */
+.unit-tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+  width: 100%;
+  padding: 5px;
+  background: #eee;
+  border-radius: 8px;
+}
+.unit-chip {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #333;
+}
+.unit-chip:active {
+  background: #007aff;
+  color: #fff;
+}
 
 .delBtn {
  width:1.2em;
@@ -89,12 +114,11 @@ body { margin:0; font-family:sans-serif; background:#f5f5f5; }
 .stepNumber { width:25px; text-align:right; }
 .stepBox textarea { flex:1; min-height:80px; }
 
-/* 買い物リストのスタイルの微調整 */
 li {
  list-style:none;
  background:#fff;
  margin:6px 0;
- padding:0; /* paddingを内側のクリック領域へ移動 */
+ padding:0;
  border-radius:8px;
  display:flex;
  align-items:center;
@@ -105,7 +129,7 @@ li {
  display:flex;
  align-items:center;
  gap:10px;
- padding:10px; /* ここでタップ範囲を確保 */
+ padding:10px;
  cursor:pointer;
 }
 
@@ -290,7 +314,7 @@ input, textarea {
  text-align:right;
  margin-bottom:4px;
 ">
- ver.4.08
+ ver.4.09
 </div>
 
 <div class="topbar" id="listBar">
@@ -351,7 +375,7 @@ input, textarea {
 <button onclick="clearShopping()">クリア</button>
 </div>
 <input id="manualItem" placeholder="材料">
-<input id="manualAmount" placeholder="分量">
+<input id="manualAmount" placeholder="分量" onfocus="showUnitTips(this)">
 <button onclick="addManual()">追加</button>
 <ul id="shopList"></ul>
 </div>
@@ -642,7 +666,6 @@ function renderShopping(){
  shopping.sort((a,b)=>a.checked - b.checked);
  shopping.forEach((s,i)=>{
   let li=document.createElement("li");
-  // 行全体をクリック可能にし、中身をcontent divでラップ
   li.innerHTML=`
     <div class="shop-item-content ${s.checked?'gray':''}" onclick="toggle(${i})">
       <input type="checkbox" ${s.checked?"checked":""} onclick="event.stopPropagation(); toggle(${i});">
@@ -771,8 +794,45 @@ function addItem(container){
  if(container.tagName === "BUTTON") container = container.previousElementSibling;
  let row=document.createElement("div");
  row.className="row";
- row.innerHTML=`<input placeholder="材料"><input placeholder="分量"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
+ row.innerHTML=`<input placeholder="材料"><input placeholder="分量" onfocus="showUnitTips(this)"><button class="delBtn" onclick="this.parentNode.remove()">×</button>`;
  container.appendChild(row);
+}
+
+// 単位入力サポート機能
+function showUnitTips(inputEl) {
+  // すでにチップが表示されている場合は削除
+  hideUnitTips();
+  
+  const units = ["大さじ", "小さじ", "g", "ml", "個", "本", "枚", "パック", "少々", "適量"];
+  const container = document.createElement("div");
+  container.className = "unit-tips";
+  
+  units.forEach(u => {
+    const chip = document.createElement("div");
+    chip.className = "unit-chip";
+    chip.textContent = u;
+    // タップイベント
+    chip.onmousedown = (e) => {
+      e.preventDefault(); // フォーカスが外れるのを防ぐ
+      inputEl.value += u;
+      hideUnitTips();
+    };
+    container.appendChild(chip);
+  });
+  
+  // 入力欄の後に挿入
+  inputEl.parentNode.appendChild(container);
+  
+  // フォーカスアウトで非表示
+  inputEl.onblur = () => {
+    // 少し遅らせて削除（タップイベントを拾うため）
+    setTimeout(hideUnitTips, 200);
+  };
+}
+
+function hideUnitTips() {
+  const existing = document.querySelector(".unit-tips");
+  if (existing) existing.remove();
 }
 
 function addStep(){
