@@ -1,160 +1,183 @@
+AI
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Recipe Fix</title>
-    <style>
-        :root { --p: #007aff; --bg: #f2f2f7; --c: #fff; --t: #1c1c1e; }
-        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--t); padding-bottom: 100px; }
-        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
-        .hidden { display: none !important; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { background: var(--c); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #ddd; display: block; }
-        .card-name { padding: 10px; font-size: 14px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        .btn { padding: 14px; border-radius: 10px; border: none; font-weight: bold; width: 100%; margin-bottom: 8px; cursor: pointer; }
-        .btn-p { background: var(--p); color: #fff; }
-        .btn-s { background: #e5e5ea; color: var(--t); }
-        .tabbar { position: fixed; bottom: 0; width: 100%; display: flex; background: var(--c); border-top: 1px solid #ccc; padding-bottom: env(safe-area-inset-bottom); }
-        .tab { flex: 1; padding: 15px; border: none; background: none; font-size: 12px; }
-        .g-wrap { background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Recipe App Pro v8.0</title>
+<style>
+:root {
+    --primary: #007aff; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --text-sub: #8e8e93;
+    --safe-area-bottom: env(safe-area-inset-bottom);
+}
+@media (prefers-color-scheme: dark) {
+    :root { --primary: #0a84ff; --bg: #000000; --card: #1c1c1e; --text: #ffffff; --text-sub: #8e8e93; }
+}
+body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+.container { padding:16px 16px calc(80px + var(--safe-area-bottom)); max-width:600px; margin:0 auto; }
+
+/* お気に入り：視認性MAX */
+.fav-btn {
+    position: absolute; top: 0; right: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; z-index: 10;
+    background: linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.3) 100%);
+}
+.fav-btn::after { content: '★'; font-size: 24px; color: #fff; filter: drop-shadow(0 0 2px rgba(0,0,0,0.8)); }
+.fav-btn.active::after { color: #ffcc00; filter: drop-shadow(0 0 5px rgba(255,204,0,0.8)); }
+
+/* リストアイテム：広いタップ判定と自動ソート用 */
+.list-item {
+    background: var(--card); padding: 14px; border-radius: 12px; margin-bottom: 8px;
+    display: flex; align-items: center; cursor: pointer; transition: 0.2s;
+}
+.list-item.done { opacity: 0.5; background: #e5e5ea; order: 1; }
+.list-item:not(.done) { order: 0; }
+.flex-list { display: flex; flex-direction: column; }
+
+/* その他スタイル */
+.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; }
+.card { background:var(--card); border-radius:18px; overflow:hidden; position:relative; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+.card img { width:100%; height:110px; object-fit:cover; background:#ccc; }
+.chip-container { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { padding: 4px 10px; background: var(--bg); border-radius: 15px; font-size: 11px; color: var(--primary); font-weight: bold; border: 1px solid var(--primary); }
+.tabbar { position:fixed; bottom:0; width:100%; display:flex; background:rgba(var(--card), 0.85); backdrop-filter:blur(20px); border-top:1px solid rgba(0,0,0,0.1); padding-bottom:var(--safe-area-bottom); z-index:1000; }
+.tab-item { flex:1; padding:12px; text-align:center; background:none; border:none; color:var(--text-sub); font-size:10px; }
+.tab-item.active { color:var(--primary); }
+.hidden { display:none; }
+input[type="text"], input[type="search"], textarea { width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; background:var(--card); color:var(--text); box-sizing:border-box; margin-bottom:10px; font-size:16px; }
+</style>
 </head>
 <body>
 
 <div class="container">
-    <div id="v-list">
-        <input type="search" id="q" placeholder="検索..." oninput="draw()">
-        <div id="list-target" class="grid"></div>
+    <div id="p-list">
+        <input type="search" id="q" placeholder="レシピを検索..." oninput="render()">
+        <div id="list" class="grid"></div>
     </div>
 
-    <div id="v-shop" class="hidden">
-        <h2>買い物</h2>
-        <div id="shop-target"></div>
-        <button class="btn btn-s" onclick="clrShop()">完了分を削除</button>
+    <div id="p-shop" class="hidden">
+        <h2>🛒 買い物リスト</h2>
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <input id="new-shop" placeholder="買うもの" style="flex:2">
+            <button onclick="addShopItem()" style="padding:10px; border-radius:10px; background:var(--primary); color:#fff; border:none;">追加</button>
+        </div>
+        <div id="shop-items" class="flex-list"></div>
     </div>
 
-    <div id="v-edit" class="hidden">
-        <input type="file" accept="image/*" onchange="upImg(this)">
-        <img id="edit-prev" style="width:100%; display:none; margin-bottom:10px;">
-        <input id="edit-title" placeholder="レシピ名">
-        <div id="edit-ings"></div>
-        <button class="btn btn-s" onclick="addG()">+ グループ追加</button>
-        <div id="edit-steps"></div>
-        <button class="btn btn-s" onclick="addS()">+ 手順追加</button>
-        <button class="btn btn-p" onclick="doSave()">保存</button>
-        <button class="btn btn-s" onclick="nav('list')">戻る</button>
+    <div id="p-stock" class="hidden">
+        <h2>📦 在庫リスト</h2>
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <input id="new-stock" placeholder="在庫アイテム" style="flex:2">
+            <button onclick="addStockItem()" style="padding:10px; border-radius:10px; background:var(--primary); color:#fff; border:none;">追加</button>
+        </div>
+        <div id="stock-items" class="flex-list"></div>
     </div>
 
-    <div id="v-detail" class="hidden"></div>
+    <div id="p-edit" class="hidden">
+        <h2 id="edit-title">レシピ編集</h2>
+        <img id="img-prev" style="width:100%; border-radius:12px; margin-bottom:10px; display:none;">
+        <input type="file" id="f-file" accept="image/*">
+        <input id="f-name" placeholder="料理名">
+        <div id="f-ings"></div>
+        <button onclick="addIngGroup()">+ グループ追加</button>
+        <div id="f-steps"></div>
+        <button onclick="addStepField()">+ 工程追加</button>
+        <button onclick="save()" style="width:100%; padding:15px; background:var(--primary); color:#fff; border:none; border-radius:12px; margin-top:20px;">保存</button>
+    </div>
+
+    <div id="p-detail" class="hidden"></div>
 </div>
 
 <nav class="tabbar">
-    <button class="tab" onclick="nav('list')">一覧</button>
-    <button class="tab" onclick="nav('shop')">買い物</button>
-    <button class="tab" onclick="initAdd()">登録</button>
+    <button class="tab-item active" onclick="nav('list')">📖 一覧</button>
+    <button class="tab-item" onclick="initAdd()">➕ 登録</button>
+    <button class="tab-item" onclick="nav('shop')">🛒 買い物</button>
+    <button class="tab-item" onclick="nav('stock')">📦 在庫</button>
 </nav>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('R_DB') || '[]');
-    let cart = JSON.parse(localStorage.getItem('R_CART') || '[]');
-    let curI = null, curImg = null;
+let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+let shopItems = JSON.parse(localStorage.getItem('shopItems') || '[]');
+let stockItems = JSON.parse(localStorage.getItem('stockItems') || '[]');
+let currentIdx = null;
+let currentImg = null;
 
-    function nav(p) {
-        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-        document.getElementById('v-' + p).classList.remove('hidden');
-        if(p==='list') draw(); if(p==='shop') drawShop();
-    }
+function nav(p) {
+    document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+    document.getElementById('p-' + p).classList.remove('hidden');
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    if(p === 'list') render();
+    if(p === 'shop') renderCheckList('shop');
+    if(p === 'stock') renderCheckList('stock');
+}
 
-    function draw() {
-        const t = document.getElementById('list-target'); t.innerHTML = "";
-        const q = document.getElementById('q').value.toLowerCase();
-        db.forEach((r, i) => {
-            if(r.name.toLowerCase().includes(q)) {
-                const d = document.createElement('div'); d.className='card';
-                d.innerHTML = `<img src="${r.img||''}"> <div class="card-name">${r.name}</div>`;
-                d.onclick = () => show(i); t.appendChild(d);
-            }
-        });
-    }
+// チェックリスト描画（買い物・在庫共通ロジック）
+function renderCheckList(type) {
+    const list = type === 'shop' ? shopItems : stockItems;
+    const target = document.getElementById(type + '-items');
+    target.innerHTML = "";
+    
+    // 未完了を上に、完了を下にソート
+    const sorted = list.map((item, index) => ({...item, originalIndex: index}))
+                       .sort((a, b) => a.checked - b.checked);
 
-    function show(i) {
-        curI = i; const r = db[i]; nav('detail');
-        document.getElementById('v-detail').innerHTML = `
-            <img src="${r.img||''}" style="width:100%">
-            <h1>${r.name}</h1>
-            ${r.ings.map(g=>`<h4>${g.n} <button onclick="toC(${i},'${g.n}')">🛒</button></h4>` + g.it.map(it=>`<div>${it.n} ${it.a}</div>`).join('')).join('')}
-            ${r.steps.map((s,idx)=>`<p>${idx+1}. ${s}</p>`).join('')}
-            <button class="btn btn-p" onclick="initEdit(${i})">編集</button>
-            <button class="btn btn-s" onclick="del(${i})" style="color:red">削除</button>
-            <button class="btn btn-s" onclick="nav('list')">戻る</button>`;
-    }
-
-    function upImg(el) {
-        const f = el.files[0]; if(!f) return;
-        const r = new FileReader(); r.onload = e => {
-            const img = new Image(); img.onload = () => {
-                const c = document.createElement('canvas'); const s = 500 / Math.max(img.width, img.height);
-                c.width = img.width * s; c.height = img.height * s;
-                c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-                curImg = c.toDataURL('image/jpeg', 0.7);
-                document.getElementById('edit-prev').src = curImg; document.getElementById('edit-prev').style.display = 'block';
-            }; img.src = e.target.result;
-        }; r.readAsDataURL(f);
-    }
-
-    function addG(n="", it=[]) {
-        const d = document.createElement('div'); d.className='g-wrap';
-        d.innerHTML = `<input class="gn" value="${n}" placeholder="グループ名"><div class="ia"></div><button onclick="addI(this.previousSibling)">+材料</button>`;
-        document.getElementById('edit-ings').appendChild(d);
-        if(it.length) it.forEach(x => addI(d.querySelector('.ia'), x.n, x.a)); else addI(d.querySelector('.ia'));
-    }
-
-    function addI(t, n="", a="") {
-        const d = document.createElement('div'); d.innerHTML = `<input class="in" value="${n}" style="width:60%"><input class="ia" value="${a}" style="width:30%"><button onclick="this.parentElement.remove()">×</button>`;
-        t.appendChild(d);
-    }
-
-    function addS(v="") {
-        const d = document.createElement('div'); d.innerHTML = `<textarea class="st">${v}</textarea><button onclick="this.parentElement.remove()">×</button>`;
-        document.getElementById('edit-steps').appendChild(d);
-    }
-
-    function initAdd() { curI=null; curImg=null; document.getElementById('edit-ings').innerHTML=""; document.getElementById('edit-steps').innerHTML=""; document.getElementById('edit-title').value=""; document.getElementById('edit-prev').style.display="none"; addG(); addS(); nav('edit'); }
-
-    function initEdit(i) {
-        curI=i; const r=db[i]; curImg=r.img; nav('edit');
-        document.getElementById('edit-title').value=r.name; document.getElementById('edit-ings').innerHTML="";
-        r.ings.forEach(g=>addG(g.n, g.it)); document.getElementById('edit-steps').innerHTML="";
-        r.steps.forEach(s=>addS(s));
-        if(curImg){ document.getElementById('edit-prev').src=curImg; document.getElementById('edit-prev').style.display='block'; }
-    }
-
-    function doSave() {
-        const r = {
-            name: document.getElementById('edit-title').value || "無題", img: curImg,
-            ings: Array.from(document.querySelectorAll('.g-wrap')).map(g=>({ n: g.querySelector('.gn').value, it: Array.from(g.querySelectorAll('.ia > div')).map(d=>({ n: d.querySelector('.in').value, a: d.querySelector('.ia').value })).filter(x=>x.n) })),
-            steps: Array.from(document.querySelectorAll('.st')).map(t=>t.value).filter(v=>v)
+    sorted.forEach(item => {
+        const div = document.createElement('div');
+        div.className = `list-item ${item.checked ? 'done' : ''}`;
+        div.onclick = () => {
+            list[item.originalIndex].checked = !list[item.originalIndex].checked;
+            saveAll();
+            renderCheckList(type);
         };
-        if(curI!==null) db[curI]=r; else db.push(r);
-        localStorage.setItem('R_DB', JSON.stringify(db)); nav('list');
-    }
+        div.innerHTML = `
+            <input type="checkbox" ${item.checked ? 'checked' : ''} style="pointer-events:none; margin-right:12px;">
+            <span style="flex:1; ${item.checked ? 'text-decoration:line-through' : ''}">${item.name}</span>
+            <button onclick="event.stopPropagation(); deleteItem('${type}', ${item.originalIndex})" style="background:none; border:none; color:red;">×</button>
+        `;
+        target.appendChild(div);
+    });
+}
 
-    function toC(i, n) { db[i].ings.find(x=>x.n===n).it.forEach(x=>cart.push({ n:x.n, a:x.a, d:false })); localStorage.setItem('R_CART', JSON.stringify(cart)); alert("追加"); }
-    function drawShop() {
-        const t = document.getElementById('shop-target'); t.innerHTML = "";
-        cart.forEach((x, i) => {
-            const d = document.createElement('div'); d.innerHTML = `<input type="checkbox" ${x.d?'checked':''} onchange="tg(${i})">${x.n} ${x.a}`;
-            t.appendChild(d);
-        });
-    }
-    function tg(i) { cart[i].d = !cart[i].d; localStorage.setItem('R_CART', JSON.stringify(cart)); drawShop(); }
-    function clrShop() { cart = cart.filter(x=>!x.d); localStorage.setItem('R_CART', JSON.stringify(cart)); drawShop(); }
-    function del(i) { if(confirm("削除？")){ db.splice(i,1); localStorage.setItem('R_DB', JSON.stringify(db)); nav('list'); } }
+function addShopItem() {
+    const input = document.getElementById('new-shop');
+    if(!input.value) return;
+    shopItems.push({name: input.value, checked: false});
+    input.value = ""; saveAll(); renderCheckList('shop');
+}
 
-    nav('list');
+function addStockItem() {
+    const input = document.getElementById('new-stock');
+    if(!input.value) return;
+    stockItems.push({name: input.value, checked: false});
+    input.value = ""; saveAll(); renderCheckList('stock');
+}
+
+function deleteItem(type, index) {
+    if(type === 'shop') shopItems.splice(index, 1);
+    else stockItems.splice(index, 1);
+    saveAll(); renderCheckList(type);
+}
+
+function saveAll() {
+    localStorage.setItem('recipes', JSON.stringify(recipes));
+    localStorage.setItem('shopItems', JSON.stringify(shopItems));
+    localStorage.setItem('stockItems', JSON.stringify(stockItems));
+}
+
+function render() {
+    const grid = document.getElementById('list');
+    grid.innerHTML = "";
+    recipes.forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = "card";
+        div.innerHTML = `<div class="fav-btn ${r.fav?'active':''}" onclick="event.stopPropagation(); recipes[${i}].fav=!recipes[${i}].fav; saveAll(); render();"></div>
+                         <img src="${r.img || ''}"><div class="card-title">${r.title}</div>`;
+        div.onclick = () => showDetail(i);
+        grid.appendChild(div);
+    });
+}
+
+// ページ読み込み時の初期表示
+nav('list');
 </script>
 </body>
 </html>
