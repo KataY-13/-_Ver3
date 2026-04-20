@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Recipe App Pro v8.0</title>
+<title>Recipe App Ultimate</title>
 <style>
 :root {
     --primary: #007aff; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --text-sub: #8e8e93;
@@ -13,169 +13,187 @@
     :root { --primary: #0a84ff; --bg: #000000; --card: #1c1c1e; --text: #ffffff; --text-sub: #8e8e93; }
 }
 body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
-.container { padding:16px 16px calc(80px + var(--safe-area-bottom)); max-width:600px; margin:0 auto; }
+.container { padding:16px 16px calc(80px + var(--safe-area-bottom)); max-width:600px; margin:0 auto; transition: transform 0.3s ease; }
 
-/* お気に入り：視認性MAX */
-.fav-btn {
-    position: absolute; top: 0; right: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; z-index: 10;
-    background: linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.3) 100%);
-}
-.fav-btn::after { content: '★'; font-size: 24px; color: #fff; filter: drop-shadow(0 0 2px rgba(0,0,0,0.8)); }
-.fav-btn.active::after { color: #ffcc00; filter: drop-shadow(0 0 5px rgba(255,204,0,0.8)); }
+/* UI Elements */
+.search-bar { width:100%; padding:12px 16px; border:none; border-radius:12px; background:var(--card); color:var(--text); font-size:16px; box-sizing:border-box; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-bottom:16px; }
+.control-panel { background:var(--card); border-radius:16px; padding:12px; margin-bottom:20px; display:flex; flex-direction:column; gap:12px; }
+.filter-row { display:flex; gap:8px; }
+.btn { flex:1; padding:10px; border:none; border-radius:10px; font-weight:600; cursor:pointer; transition:0.2s; background:#e5e5ea; color:var(--text-sub); }
+.btn.active { background:var(--primary); color:#fff; }
+.sort-select { background:var(--bg); color:var(--primary); border:none; padding:8px; border-radius:8px; font-weight:bold; }
 
-/* リストアイテム：広いタップ判定と自動ソート用 */
-.list-item {
-    background: var(--card); padding: 14px; border-radius: 12px; margin-bottom: 8px;
-    display: flex; align-items: center; cursor: pointer; transition: 0.2s;
-}
-.list-item.done { opacity: 0.5; background: #e5e5ea; order: 1; }
-.list-item:not(.done) { order: 0; }
-.flex-list { display: flex; flex-direction: column; }
-
-/* その他スタイル */
+/* Grid & Cards */
 .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; }
-.card { background:var(--card); border-radius:18px; overflow:hidden; position:relative; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
-.card img { width:100%; height:110px; object-fit:cover; background:#ccc; }
-.chip-container { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.chip { padding: 4px 10px; background: var(--bg); border-radius: 15px; font-size: 11px; color: var(--primary); font-weight: bold; border: 1px solid var(--primary); }
-.tabbar { position:fixed; bottom:0; width:100%; display:flex; background:rgba(var(--card), 0.85); backdrop-filter:blur(20px); border-top:1px solid rgba(0,0,0,0.1); padding-bottom:var(--safe-area-bottom); z-index:1000; }
+.card { background:var(--card); border-radius:18px; overflow:hidden; position:relative; box-shadow:0 4px 15px rgba(0,0,0,0.05); }
+.card img { width:100%; height:120px; object-fit:cover; }
+.card-content { padding:10px; }
+.card-title { font-size:14px; font-weight:bold; height:2.6em; overflow:hidden; }
+.fav-btn { position:absolute; top:8px; right:8px; font-size:22px; color:rgba(255,255,255,0.8); text-shadow:0 0 4px rgba(0,0,0,0.5); }
+.fav-btn.active { color:#ffcc00; }
+
+/* Detail & Interaction */
+.step-item { display:flex; gap:12px; padding:15px; background:var(--card); border-radius:12px; margin-bottom:8px; transition:0.2s; }
+.step-item.done { opacity:0.3; text-decoration:line-through; transform:scale(0.98); }
+.ing-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:0.5px solid var(--text-sub); }
+
+/* Swipe & Navigation */
+.tabbar { position:fixed; bottom:0; width:100%; display:flex; background:rgba(var(--card), 0.8); backdrop-filter:blur(20px); border-top:0.5px solid var(--text-sub); padding-bottom:var(--safe-area-bottom); z-index:1000; }
 .tab-item { flex:1; padding:12px; text-align:center; background:none; border:none; color:var(--text-sub); font-size:10px; }
 .tab-item.active { color:var(--primary); }
+.tab-icon { font-size:20px; display:block; }
+
+#toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 20px; border-radius:20px; z-index:2000; opacity:0; transition:0.3s; }
 .hidden { display:none; }
-input[type="text"], input[type="search"], textarea { width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; background:var(--card); color:var(--text); box-sizing:border-box; margin-bottom:10px; font-size:16px; }
 </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="p-list">
-        <input type="search" id="q" placeholder="レシピを検索..." oninput="render()">
-        <div id="list" class="grid"></div>
-    </div>
-
-    <div id="p-shop" class="hidden">
-        <h2>🛒 買い物リスト</h2>
-        <div style="display:flex; gap:8px; margin-bottom:15px;">
-            <input id="new-shop" placeholder="買うもの" style="flex:2">
-            <button onclick="addShopItem()" style="padding:10px; border-radius:10px; background:var(--primary); color:#fff; border:none;">追加</button>
+<div id="main-container" class="container">
+    <div id="page-list">
+        <input type="search" id="search" class="search-bar" placeholder="レシピを検索..." oninput="render()">
+        <div class="control-panel">
+            <div class="filter-row">
+                <button id="f-all" class="btn active" onclick="setFilter('all')">すべて</button>
+                <button id="f-fav" class="btn" onclick="setFilter('fav')">お気に入り</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; color:var(--text-sub);">並べ替え</span>
+                <select id="sort" class="sort-select" onchange="render()">
+                    <option value="new">登録順</option>
+                    <option value="count">調理回数</option>
+                    <option value="date">最近作った</option>
+                </select>
+            </div>
         </div>
-        <div id="shop-items" class="flex-list"></div>
+        <div id="list-grid" class="grid"></div>
     </div>
 
-    <div id="p-stock" class="hidden">
-        <h2>📦 在庫リスト</h2>
-        <div style="display:flex; gap:8px; margin-bottom:15px;">
-            <input id="new-stock" placeholder="在庫アイテム" style="flex:2">
-            <button onclick="addStockItem()" style="padding:10px; border-radius:10px; background:var(--primary); color:#fff; border:none;">追加</button>
-        </div>
-        <div id="stock-items" class="flex-list"></div>
-    </div>
-
-    <div id="p-edit" class="hidden">
-        <h2 id="edit-title">レシピ編集</h2>
-        <img id="img-prev" style="width:100%; border-radius:12px; margin-bottom:10px; display:none;">
-        <input type="file" id="f-file" accept="image/*">
-        <input id="f-name" placeholder="料理名">
-        <div id="f-ings"></div>
-        <button onclick="addIngGroup()">+ グループ追加</button>
-        <div id="f-steps"></div>
-        <button onclick="addStepField()">+ 工程追加</button>
-        <button onclick="save()" style="width:100%; padding:15px; background:var(--primary); color:#fff; border:none; border-radius:12px; margin-top:20px;">保存</button>
-    </div>
-
-    <div id="p-detail" class="hidden"></div>
+    <div id="page-detail" class="hidden"></div>
+    <div id="page-edit" class="hidden"></div>
+    <div id="page-shop" class="hidden"></div>
+    <div id="page-settings" class="hidden"></div>
 </div>
 
 <nav class="tabbar">
-    <button class="tab-item active" onclick="nav('list')">📖 一覧</button>
-    <button class="tab-item" onclick="initAdd()">➕ 登録</button>
-    <button class="tab-item" onclick="nav('shop')">🛒 買い物</button>
-    <button class="tab-item" onclick="nav('stock')">📦 在庫</button>
+    <button class="tab-item active" onclick="nav('list')"><span class="tab-icon">📖</span>一覧</button>
+    <button class="tab-item" onclick="nav('edit')"><span class="tab-icon">➕</span>登録</button>
+    <button class="tab-item" onclick="nav('shop')"><span class="tab-icon">🛒</span>買い物</button>
+    <button class="tab-item" onclick="nav('settings')"><span class="tab-icon">⚙️</span>設定</button>
 </nav>
+
+<div id="toast"></div>
 
 <script>
 let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
-let shopItems = JSON.parse(localStorage.getItem('shopItems') || '[]');
-let stockItems = JSON.parse(localStorage.getItem('stockItems') || '[]');
-let currentIdx = null;
-let currentImg = null;
+let shopList = JSON.parse(localStorage.getItem('shopList') || '[]');
+let filter = 'all';
+let currentEditIndex = null;
 
-function nav(p) {
+// --- Core Logic ---
+function nav(page) {
     document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-    document.getElementById('p-' + p).classList.remove('hidden');
+    document.getElementById('page-' + page).classList.remove('hidden');
     document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-    if(p === 'list') render();
-    if(p === 'shop') renderCheckList('shop');
-    if(p === 'stock') renderCheckList('stock');
-}
-
-// チェックリスト描画（買い物・在庫共通ロジック）
-function renderCheckList(type) {
-    const list = type === 'shop' ? shopItems : stockItems;
-    const target = document.getElementById(type + '-items');
-    target.innerHTML = "";
-    
-    // 未完了を上に、完了を下にソート
-    const sorted = list.map((item, index) => ({...item, originalIndex: index}))
-                       .sort((a, b) => a.checked - b.checked);
-
-    sorted.forEach(item => {
-        const div = document.createElement('div');
-        div.className = `list-item ${item.checked ? 'done' : ''}`;
-        div.onclick = () => {
-            list[item.originalIndex].checked = !list[item.originalIndex].checked;
-            saveAll();
-            renderCheckList(type);
-        };
-        div.innerHTML = `
-            <input type="checkbox" ${item.checked ? 'checked' : ''} style="pointer-events:none; margin-right:12px;">
-            <span style="flex:1; ${item.checked ? 'text-decoration:line-through' : ''}">${item.name}</span>
-            <button onclick="event.stopPropagation(); deleteItem('${type}', ${item.originalIndex})" style="background:none; border:none; color:red;">×</button>
-        `;
-        target.appendChild(div);
-    });
-}
-
-function addShopItem() {
-    const input = document.getElementById('new-shop');
-    if(!input.value) return;
-    shopItems.push({name: input.value, checked: false});
-    input.value = ""; saveAll(); renderCheckList('shop');
-}
-
-function addStockItem() {
-    const input = document.getElementById('new-stock');
-    if(!input.value) return;
-    stockItems.push({name: input.value, checked: false});
-    input.value = ""; saveAll(); renderCheckList('stock');
-}
-
-function deleteItem(type, index) {
-    if(type === 'shop') shopItems.splice(index, 1);
-    else stockItems.splice(index, 1);
-    saveAll(); renderCheckList(type);
-}
-
-function saveAll() {
-    localStorage.setItem('recipes', JSON.stringify(recipes));
-    localStorage.setItem('shopItems', JSON.stringify(shopItems));
-    localStorage.setItem('stockItems', JSON.stringify(stockItems));
+    window.scrollTo(0,0);
+    if(page === 'list') render();
+    if(page === 'shop') renderShop();
 }
 
 function render() {
-    const grid = document.getElementById('list');
-    grid.innerHTML = "";
-    recipes.forEach((r, i) => {
+    const grid = document.getElementById('list-grid');
+    const q = document.getElementById('search').value.toLowerCase();
+    const sort = document.getElementById('sort').value;
+    grid.innerHTML = '';
+
+    let items = recipes.map((r, i) => ({...r, id: i}))
+        .filter(r => (filter === 'all' || r.fav) && (r.title.toLowerCase().includes(q)));
+
+    if(sort === 'count') items.sort((a,b) => (b.count||0) - (a.count||0));
+    if(sort === 'date') items.sort((a,b) => new Date(b.last||0) - new Date(a.last||0));
+
+    items.forEach(item => {
         const div = document.createElement('div');
-        div.className = "card";
-        div.innerHTML = `<div class="fav-btn ${r.fav?'active':''}" onclick="event.stopPropagation(); recipes[${i}].fav=!recipes[${i}].fav; saveAll(); render();"></div>
-                         <img src="${r.img || ''}"><div class="card-title">${r.title}</div>`;
-        div.onclick = () => showDetail(i);
+        div.className = 'card';
+        div.innerHTML = `
+            <div class="fav-btn ${item.fav?'active':''}" onclick="event.stopPropagation(); toggleFav(${item.id})">★</div>
+            <img src="${item.img || 'https://via.placeholder.com/150'}">
+            <div class="card-content">
+                <div class="card-title">${item.title}</div>
+                <div style="font-size:10px; color:var(--text-sub); text-align:right;">🍳 ${item.count||0}</div>
+            </div>
+        `;
+        div.onclick = () => showDetail(item.id);
         grid.appendChild(div);
     });
 }
 
-// ページ読み込み時の初期表示
+function showDetail(idx) {
+    const r = recipes[idx];
+    const p = document.getElementById('page-detail');
+    nav('detail');
+    p.innerHTML = `
+        <div style="padding-bottom:20px;">
+            <button class="btn" style="background:none; color:var(--primary); padding:0;" onclick="nav('list')">◀ 戻る</button>
+            <h1 style="margin:10px 0;">${r.title}</h1>
+            <img src="${r.img || ''}" style="width:100%; border-radius:15px; margin-bottom:15px;">
+            <button class="btn active" style="width:100%; padding:15px; margin-bottom:20px;" onclick="cook(${idx})">🍳 今日作った！</button>
+            
+            <h3>材料</h3>
+            ${r.ings.map(g => `
+                <div style="margin-bottom:15px;">
+                    <strong style="color:var(--primary);">${g.name}</strong>
+                    ${g.items.map(it => `
+                        <div class="ing-row" onclick="toShop('${it.name}','${it.amount}')">
+                            <span>${it.name}</span><span>${it.amount}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')}
+
+            <h3>作り方</h3>
+            ${r.steps.map((s, i) => `
+                <div class="step-item" onclick="this.classList.toggle('done')">
+                    <b style="color:var(--primary);">${i+1}</b><div>${s}</div>
+                </div>
+            `).join('')}
+            
+            <div style="display:flex; gap:10px; margin-top:30px;">
+                <button class="btn" onclick="edit(${idx})">編集</button>
+                <button class="btn" style="color:red;" onclick="del(${idx})">削除</button>
+            </div>
+        </div>
+    `;
+}
+
+// --- Swipe Logic (Back to list) ---
+let startX = 0;
+document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+document.addEventListener('touchend', e => {
+    let diff = e.changedTouches[0].clientX - startX;
+    if(diff > 100 && !document.getElementById('page-detail').classList.contains('hidden')) nav('list');
+});
+
+// --- Functions ---
+function cook(idx) {
+    recipes[idx].count = (recipes[idx].count || 0) + 1;
+    recipes[idx].last = new Date().toISOString();
+    save(); showToast('調理記録を更新しました'); showDetail(idx);
+}
+function toShop(n, a) { shopList.push({n, a, d:false}); save(); showToast('買い物リストに追加'); }
+function save() { 
+    localStorage.setItem('recipes', JSON.stringify(recipes)); 
+    localStorage.setItem('shopList', JSON.stringify(shopList));
+}
+function showToast(m) {
+    const t = document.getElementById('toast');
+    t.textContent = m; t.style.opacity = 1;
+    setTimeout(() => t.style.opacity = 0, 2000);
+}
+function toggleFav(idx) { recipes[idx].fav = !recipes[idx].fav; save(); render(); }
+function setFilter(f) { filter = f; document.getElementById('f-all').className = f==='all'?'btn active':'btn'; document.getElementById('f-fav').className = f==='fav'?'btn active':'btn'; render(); }
+
+// 初期起動
 nav('list');
 </script>
 </body>
