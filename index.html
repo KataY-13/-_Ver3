@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>レシピアプリ</title>
+<title>レシピアプリ 究極版</title>
 
 <style>
 :root {
@@ -50,9 +50,9 @@ body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); co
 .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:12px; }
 .card { background:var(--card-bg); border-radius:16px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08); position:relative; }
 .card img { width:100%; height:100px; object-fit:cover; }
-.card-info { padding:8px; min-height:40px; position:relative; }
-.card-title { font-size:13px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.card-sub { position:absolute; bottom:8px; right:8px; font-size:10px; color:var(--text-sub); margin-top:4px; }
+.card-info { padding:8px; min-height:40px; position:relative; display: flex; flex-direction: column; justify-content: space-between; }
+.card-title { font-size:13px; font-weight:bold; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom: 12px; }
+.card-sub { align-self: flex-end; font-size:10px; color:var(--text-sub); }
 .fav-star {
   position:absolute; top:6px; right:6px; font-size:20px; color:rgba(0,0,0,0.2);
   text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; cursor:pointer; z-index:5;
@@ -313,7 +313,7 @@ function showDetail(i) {
   
   let html = `
     <div class="detail-header">
-      <h1 style="margin:0 0 10px 0;">${r.title}</h1>
+      <h1 style="margin:0 0 10px 0; font-size:24px;">${r.title}</h1>
       <div style="display:flex; gap:10px;">
         <button onclick="markCooked(${i})" class="main-btn" style="flex:2; margin:0; background:#34c759;">🍳 今日作った</button>
         <button onclick="toggleFavDetail(${i})" class="main-btn" style="flex:1; margin:0; background:${r.favorite?'#ffcc00':'#eee'}; color:${r.favorite?'#fff':'#888'};">★</button>
