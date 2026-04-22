@@ -88,9 +88,33 @@ body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); co
 .tab-icon { font-size:20px; margin-bottom:2px; }
 
 /* 共通ボタン */
+/* 共通ボタン（当たり判定を広げ、反応を速くした設定） */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; 
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  padding: 12px 16px;
+  font-family: inherit;
+}
+
 button.main-btn {
-  width:100%; padding:14px; border:none; border-radius:14px;
+  width:100%; border:none; border-radius:14px;
   background:var(--primary); color:#fff; font-size:16px; font-weight:bold; margin-top:10px;
+}
+
+/* 編集・削除ボタン用に追加 */
+.detail-footer-btn {
+  appearance: none;
+  border: 1px solid #ddd;
+  background: #fff;
+  width: 100%;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
 }
 .del-btn { background:#ff3b30 !important; margin-top:20px !important; opacity:0.8; }
 
@@ -111,7 +135,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.04
+      v1.05
     
     
     
@@ -381,9 +405,13 @@ function showDetail(i) {
   });
 
   html += `
-    <div style="display:flex; gap:10px; margin-top:30px;">
-      <button onclick="editRecipe(${i})" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd; background:#fff;">編集</button>
-      <button onclick="deleteRecipe(${i})" style="flex:1; padding:12px; border-radius:10px; border:none; background:#ff3b30; color:#fff; opacity:0.8;">削除</button>
+    <div style="display:flex; gap:12px; margin-top:30px; padding-bottom:40px;">
+      <button onclick="editRecipe(${i})" class="detail-footer-btn" style="flex:1;">
+        編集
+      </button>
+      <button onclick="deleteRecipe(${i})" class="detail-footer-btn" style="flex:1; background:#ff3b30; color:#fff; border:none;">
+        削除
+      </button>
     </div>
   `;
   detailDiv.innerHTML = html;
