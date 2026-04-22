@@ -111,7 +111,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.03
+      v1.04
     
     
     
@@ -217,21 +217,41 @@ let touchStartX = 0;
 function handleTouchStart(e) { touchStartX = e.touches[0].clientX; }
 function handleTouchEnd(e) {
   let touchEndX = e.changedTouches[0].clientX;
-  let diff = touchStartX - touchEndX;
-  if (Math.abs(diff) < 50) return;
+  let touchEndY = e.changedTouches[0].clientY; // Y座標も取得
+  
+  let diffX = touchStartX - touchEndX;
+  let diffY = touchStartY - touchEndY; // 縦方向の移動距離
+
+  // 1. 縦にスクロールしようとしている時はスワイプ判定をキャンセルする
+  // (横移動 diffX が 縦移動 diffY より小さい場合はスクロールとみなす)
+  if (Math.abs(diffX) < Math.abs(diffY)) return;
+
+  // 2. 移動距離が短すぎる場合は無視
+  if (Math.abs(diffX) < 50) return;
+
   if (currentPage === 'detail') {
-    if (diff < -50) showPage('list');
+    if (diffX < -50) showPage('list');
     return;
   }
+
   let idx = pages.indexOf(currentPage);
-  if (diff > 50) {
+  if (diffX > 50) {
     let next = (idx + 1) % pages.length;
     showPage(pages[next]);
-  } else if (diff < -50) {
+  } else if (diffX < -50) {
     let prev = (idx - 1 + pages.length) % pages.length;
     showPage(pages[prev]);
   }
 }
+
+// 縦方向の開始位置も記録するように handleTouchStart も修正
+let touchStartY = 0;
+function handleTouchStart(e) { 
+  touchStartX = e.touches[0].clientX; 
+  touchStartY = e.touches[0].clientY; 
+}
+  
+
 
 // ページ切り替え
 function showPage(p) {
@@ -417,30 +437,30 @@ function saveRecipe() {
       let ins = row.querySelectorAll("input");
       if(ins[0].value) {
         items.push({name:ins[0].value, amount:ins[1].value});
-        itemsText.push(`${ins[0].value}(${ins[1].value})`);
+        // 【修正】カッコではなく「品名:分量」の形式にする
+        itemsText.push(`${ins[0].value}:${ins[1].value}`);
       }
     });
     let gName = box.querySelector(".grp-name").value || "材料";
     if(items.length > 0) {
       ingData.push({name:gName, items});
-      // グループ名をキーにして「品名(分量)、品名(分量)」という文字列を作る
+      // 「品名:分量、品名:分量」という文字列を作る
       ingMap[gName] = itemsText.join('、');
     }
   });
 
-  // --- 2. 作り方の取得と、古いカッコ書きの削除 ＆ 最新への置換 ---
+  // --- 2. 作り方の取得と、古い表記の削除 ＆ 最新への置換 ---
   let stepData = [];
   document.querySelectorAll(".step-input").forEach(ta => {
     let text = ta.value;
     if(text) {
       Object.keys(ingMap).forEach(groupName => {
-        // 正規表現で「グループ名（...）」というパターンを一度リセットする
-        // 例：「調味料A（醤油(大1)）」 → 「調味料A」に戻す
-        const escapedGroupName = groupName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 記号対策
+        // 【修正】「グループ名（...）」というパターンを正規表現で探して削除
+        const escapedGroupName = groupName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapedGroupName + "（[^）]+）", "g");
         text = text.replace(regex, groupName);
 
-        // その後、改めて最新の材料を付与する
+        // 【修正】最新の材料を「グループ名（材料:分量）」の形式で付与
         text = text.replaceAll(groupName, `${groupName}（${ingMap[groupName]}）`);
       });
       stepData.push(text);
@@ -459,7 +479,7 @@ function saveRecipe() {
   if(editIndex !== null) recipes[editIndex] = data;
   else recipes.push(data);
   
-  saveAndSync(); clearForm(); showPage('list'); showToast("材料を最新に更新して保存しました");
+  saveAndSync(); clearForm(); showPage('list'); showToast("材料表記を更新して保存しました");
 }
 
 function editRecipe(i) {
