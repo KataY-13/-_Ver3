@@ -448,9 +448,12 @@ function editRecipe(i) {
       let ins = row.querySelectorAll("input"); ins[0].value = it.name; ins[1].value = it.amount;
     });
   });
-  stepsArea.innerHTML = ""; r.steps.forEach(s => {
-    addStep(); stepsArea.lastChild.querySelector("textarea").value = s.replace(/^\d+\.\s*/, "");
-  });
+  stepsArea.innerHTML = ""; 
+  r.steps.forEach(s => {
+  addStep(); 
+  // addStepで追加された直後の要素に値をセットする
+  stepsArea.lastChild.querySelector("textarea").value = s.replace(/^\d+\.\s*/, "");
+});
 }
 
 function deleteRecipe(i) { if(confirm("消去しますか？")) { recipes.splice(i,1); saveAndSync(); showPage('list'); } }
@@ -520,6 +523,16 @@ function addStep() {
   `;
   stepsArea.appendChild(div);
 }
+function updateStepNumbers() {
+  const rows = document.querySelectorAll('.step-row');
+  rows.forEach((row, index) => {
+    const label = row.querySelector('.step-label');
+    if (label) {
+      label.textContent = index + 1;
+    }
+  });
+}
+  
 
 // 買い物・在庫・バックアップ
 function renderShopping() {
