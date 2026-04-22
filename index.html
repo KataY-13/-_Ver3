@@ -111,7 +111,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.02
+      v1.03
     
     
     
@@ -405,22 +405,49 @@ function saveAndSync() {
 
 function saveRecipe() {
   if(!title.value) return showToast("タイトルを入力してください");
+
+  // --- 1. 材料データの取得と置換用マップの作成 ---
   let ingData = [];
+  let ingMap = {}; 
+  
   document.querySelectorAll(".groupBox").forEach(box => {
     let items = [];
+    let itemsText = [];
     box.querySelectorAll(".row").forEach(row => {
       let ins = row.querySelectorAll("input");
-      if(ins[0].value) items.push({name:ins[0].value, amount:ins[1].value});
+      if(ins[0].value) {
+        items.push({name:ins[0].value, amount:ins[1].value});
+        itemsText.push(`${ins[0].value}(${ins[1].value})`);
+      }
     });
     let gName = box.querySelector(".grp-name").value || "材料";
-    if(items.length > 0) ingData.push({name:gName, items});
+    if(items.length > 0) {
+      ingData.push({name:gName, items});
+      // グループ名をキーにして「品名(分量)、品名(分量)」という文字列を作る
+      ingMap[gName] = itemsText.join('、');
+    }
   });
 
+  // --- 2. 作り方の取得と、古いカッコ書きの削除 ＆ 最新への置換 ---
   let stepData = [];
   document.querySelectorAll(".step-input").forEach(ta => {
-    if(ta.value) stepData.push(ta.value);
+    let text = ta.value;
+    if(text) {
+      Object.keys(ingMap).forEach(groupName => {
+        // 正規表現で「グループ名（...）」というパターンを一度リセットする
+        // 例：「調味料A（醤油(大1)）」 → 「調味料A」に戻す
+        const escapedGroupName = groupName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 記号対策
+        const regex = new RegExp(escapedGroupName + "（[^）]+）", "g");
+        text = text.replace(regex, groupName);
+
+        // その後、改めて最新の材料を付与する
+        text = text.replaceAll(groupName, `${groupName}（${ingMap[groupName]}）`);
+      });
+      stepData.push(text);
+    }
   });
 
+  // --- 3. 保存実行 ---
   let data = {
     title: title.value, group: group.value, sourceUrl: sourceUrl.value,
     image: formImage, ingredients: ingData, steps: stepData,
@@ -432,7 +459,7 @@ function saveRecipe() {
   if(editIndex !== null) recipes[editIndex] = data;
   else recipes.push(data);
   
-  saveAndSync(); clearForm(); showPage('list'); showToast("保存しました");
+  saveAndSync(); clearForm(); showPage('list'); showToast("材料を最新に更新して保存しました");
 }
 
 function editRecipe(i) {
