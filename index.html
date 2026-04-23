@@ -111,7 +111,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.02
+      v1.01
     
     
     
@@ -506,18 +506,8 @@ function hideChips(input) {
 }
 
 function addStep() {
-  let div = document.createElement("div");
-  div.className = "step-row"; // 管理用にクラス名を追加
-  div.style = "display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;";
-  
-  // 現在の工程数を取得して番号を振る
-  const stepNum = document.querySelectorAll('.step-row').length + 1;
-
-  div.innerHTML = `
-    <span class="step-label" style="font-weight:bold; color:var(--primary); padding-top:8px; min-width:20px;">${stepNum}</span>
-    <textarea class="step-input" placeholder="手順を入力" style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd; height:60px;"></textarea>
-    <button onclick="this.parentNode.remove(); updateStepNumbers();" style="color:red; background:none; border:none; padding-top:8px;">×</button>
-  `;
+  let div = document.createElement("div"); div.style = "display:flex; gap:5px; margin-bottom:8px;";
+  div.innerHTML = `<textarea class="step-input" placeholder="手順を入力" style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd; height:60px;"></textarea><button onclick="this.parentNode.remove()" style="color:red; background:none; border:none;">×</button>`;
   stepsArea.appendChild(div);
 }
 
