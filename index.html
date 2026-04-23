@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>レシピアプリ</title>
+<title>レシピアプリ 究極版</title>
 
 <style>
 :root {
@@ -110,15 +110,7 @@ button.main-btn {
 
 <div class="container">
   <div id="listPage">
-    <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.01
-    
-    
-    
-
-      
-    
-    </div>
+    <div style="font-size: 10px; color: var(--text-sub); text-align: right;">v1.1.0</div>
     <div class="top-controls">
       <div class="search-wrapper">
         <input id="search" placeholder="材料や料理名で検索..." oninput="renderList()">
@@ -463,15 +455,11 @@ function addGroup() {
   ingredientsArea.appendChild(div); addItem(div.querySelector(".items"));
 }
 function addItem(target) {
-  let div = document.createElement("div"); 
-  div.className = "row"; 
-  div.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;";
+  let div = document.createElement("div"); div.className = "row"; div.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;";
   div.innerHTML = `
     <div style="display:flex; gap:5px;">
       <input placeholder="品名" style="flex:2; padding:8px; border-radius:5px; border:1px solid #ddd;">
-      <input class="amount-input" placeholder="分量" style="flex:1; padding:8px; border-radius:5px; border:1px solid #ddd;" 
-             onfocus="showChips(this)" 
-             onblur="hideChips(this)">
+      <input class="amount-input" placeholder="分量" style="flex:1; padding:8px; border-radius:5px; border:1px solid #ddd;" onfocus="showChips(this)">
       <button onclick="this.parentNode.parentNode.remove()" style="color:#ccc; background:none; border:none;">×</button>
     </div>
     <div class="chip-container hidden"></div>
@@ -487,22 +475,9 @@ function showChips(input) {
     let chip = document.createElement("span");
     chip.className = "chip";
     chip.textContent = label;
-    // クリック時の挙動を変更
-    chip.onmousedown = (e) => {
-      e.preventDefault(); // blurイベントを防いで入力欄に留まらせる
-      input.value += label;
-      input.focus(); // 念のためフォーカスを維持
-    };
+    chip.onclick = () => { input.value += label; container.classList.add('hidden'); };
     container.appendChild(chip);
   });
-}
-
-function hideChips(input) {
-  const container = input.parentNode.nextElementSibling;
-  // 少し遅らせて実行しないと、チップのクリックイベントが拾えない場合がある
-  setTimeout(() => {
-    container.classList.add('hidden');
-  }, 200);
 }
 
 function addStep() {
