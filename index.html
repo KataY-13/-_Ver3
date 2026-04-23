@@ -14,28 +14,8 @@
   --text-sub: #8e8e93;
 }
 
-#shoppingPage, #listPage, #addPage, #stockPage, #detailPage {
-  min-height: calc(100vh - 60px); /* 画面全体の高さを確保（タブバー分を引く） */
-  padding-bottom: 120px;
-  box-sizing: border-box;
-}
-
-/* --- この部分を追加 --- */
-.container { 
-  padding: 16px 16px 120px; 
-  max-width: 600px; 
-  margin: 0 auto; 
-}
-
-body { 
-  margin:0; 
-  font-family:-apple-system, sans-serif; 
-  background:var(--bg); 
-  color:var(--text); 
-  line-height:1.5; 
-  overflow-x: hidden; 
-  min-height: 100vh; /* body自体も画面いっぱいの高さにする */
-}
+body { margin:0; font-family:-apple-system, sans-serif; background:var(--bg); color:var(--text); line-height:1.5; overflow-x: hidden; }
+.container { padding:16px 16px 120px; max-width:600px; margin:0 auto; }
 
 /* 検索 & 操作エリア */
 .top-controls { margin-bottom:20px; }
@@ -155,7 +135,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.07
+      v1.05
     
     
     
