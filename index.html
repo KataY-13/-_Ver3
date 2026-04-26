@@ -119,6 +119,41 @@ button.main-btn {
 }
 .del-btn { background:#ff3b30 !important; margin-top:20px !important; opacity:0.8; }
 
+/* グループヘッダーと移動ボタンの調整 */
+.group-header {
+  grid-column: 1/-1;
+  padding: 10px 14px;
+  background: #e5e5ea;
+  border-radius: 12px;
+  margin: 16px 0 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.move-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.move-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  min-height: auto;
+  border: none;
+  background: rgba(0,0,0,0.05);
+  border-radius: 50%;
+  font-size: 14px;
+  color: var(--text-sub);
+  transition: background 0.2s;
+}
+
+.move-btn:active {
+  background: rgba(0,0,0,0.15);
+  color: var(--text);
+}
+
 .chip-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .chip { background: #e5e5ea; padding: 4px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; }
 
@@ -136,7 +171,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.08
+      v1.09
     
     
     
@@ -303,10 +338,8 @@ function renderList() {
   
   document.getElementById("clearSearch").style.display = key ? "flex" : "none";
 
-  // 今あるレシピをグループ分けする
   let groups = {};
   recipes.forEach((r, i) => {
-    // 検索・フィルタ条件に合うかチェック
     const titleHit = toKatakana(r.title.toLowerCase()).includes(key);
     let ingHit = false;
     r.ingredients.forEach(g => g.items.forEach(it => {
@@ -319,29 +352,30 @@ function renderList() {
     groups[gName].push({r, i});
   });
 
-  // groupOrder（並び順リスト）に新しいグループがあれば自動で追加
   Object.keys(groups).forEach(g => {
     if (!groupOrder.includes(g)) groupOrder.push(g);
   });
 
-  // リストの順番通りに画面に表示していく
   groupOrder.forEach(gName => {
-    if (!groups[gName]) return; // そのグループにレシピがなければ表示しない
+    if (!groups[gName]) return;
 
+    // ★修正点：初期値を false (閉じている状態) にする
     if(openGroups[gName] === undefined) openGroups[gName] = false;
     
     let section = document.createElement("div");
-    section.style = "grid-column: 1/-1; padding:10px; background:#e5e5ea; border-radius:8px; margin:10px 0 5px; display:flex; justify-content:space-between; align-items:center;";
+    section.className = "group-header"; // スタイルをクラス指定に変更
     section.innerHTML = `
-      <div style="font-weight:bold; flex:1;" onclick="toggleGroup('${gName}')">${gName} ${openGroups[gName]?'▼':'▲'}</div>
-      <div style="display:flex; gap:5px;">
-        <button onclick="moveGroup('${gName}', -1)" style="padding:4px 8px; min-height:30px; border:1px solid #ccc; background:#fff; border-radius:4px;">↑</button>
-        <button onclick="moveGroup('${gName}', 1)" style="padding:4px 8px; min-height:30px; border:1px solid #ccc; background:#fff; border-radius:4px;">↓</button>
+      <div style="font-weight:bold; flex:1; cursor:pointer;" onclick="toggleGroup('${gName}')">
+        ${gName} <span style="font-size:12px; color:var(--text-sub); margin-left:4px;">${openGroups[gName]?'▼':'▶'}</span>
+      </div>
+      <div class="move-btn-group">
+        <button class="move-btn" onclick="moveGroup('${gName}', -1)">↑</button>
+        <button class="move-btn" onclick="moveGroup('${gName}', 1)">↓</button>
       </div>`;
     listDiv.appendChild(section);
 
     if(openGroups[gName]) {
-      // カードを表示（中身のソート処理含む）
+      // (以下、カード描画の処理はそのまま)
       let targetList = groups[gName];
       if(sortType === 'count') targetList.sort((a,b) => (b.r.cookCount||0) - (a.r.cookCount||0));
       if(sortType === 'date') targetList.sort((a,b) => new Date(b.r.lastCookedDate||0) - new Date(a.r.lastCookedDate||0));
