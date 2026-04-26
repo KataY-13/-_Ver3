@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -136,7 +137,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.06
+      v1.05
     
     
     
@@ -229,7 +230,6 @@ button.main-btn {
 
 <script>
 let recipes = JSON.parse(localStorage.getItem("recipes")||"[]");
-let groupOrder = JSON.parse(localStorage.getItem("groupOrder") || "[]");
 let shopping = JSON.parse(localStorage.getItem("shopping")||"[]");
 let stock = JSON.parse(localStorage.getItem("stockItems")||"[]");
 let editIndex = null;
@@ -303,45 +303,39 @@ function renderList() {
   
   document.getElementById("clearSearch").style.display = key ? "flex" : "none";
 
-  // 今あるレシピをグループ分けする
-  let groups = {};
-  recipes.forEach((r, i) => {
-    // 検索・フィルタ条件に合うかチェック
-    const titleHit = toKatakana(r.title.toLowerCase()).includes(key);
+  let filtered = recipes.map((r, i) => ({r, i})).filter(obj => {
+    const titleHit = toKatakana(obj.r.title.toLowerCase()).includes(key);
     let ingHit = false;
-    r.ingredients.forEach(g => g.items.forEach(it => {
+    obj.r.ingredients.forEach(g => g.items.forEach(it => {
       if(toKatakana(it.name.toLowerCase()).includes(key)) ingHit = true;
     }));
-    if (!((titleHit || ingHit) && (currentFilter === 'all' || r.favorite))) return;
-
-    let gName = r.group || "未分類";
-    if(!groups[gName]) groups[gName] = [];
-    groups[gName].push({r, i});
+    const matchSearch = titleHit || ingHit;
+    const matchFilter = currentFilter === 'all' || obj.r.favorite;
+    if (key && matchSearch) {
+        let g = obj.r.group || "未分類";
+        openGroups[g] = true;
+    }
+    return matchSearch && matchFilter;
   });
 
-  // groupOrder（並び順リスト）に新しいグループがあれば自動で追加
-  Object.keys(groups).forEach(g => {
-    if (!groupOrder.includes(g)) groupOrder.push(g);
+  // グループ化
+  let groups = {};
+  filtered.forEach(obj => {
+    let g = obj.r.group || "未分類";
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(obj);
   });
 
-  // リストの順番通りに画面に表示していく
-  groupOrder.forEach(gName => {
-    if (!groups[gName]) return; // そのグループにレシピがなければ表示しない
-
+  Object.keys(groups).sort().forEach(gName => {
     if(openGroups[gName] === undefined) openGroups[gName] = true;
-    
     let section = document.createElement("div");
-    section.style = "grid-column: 1/-1; padding:10px; background:#e5e5ea; border-radius:8px; margin:10px 0 5px; display:flex; justify-content:space-between; align-items:center;";
-    section.innerHTML = `
-      <div style="font-weight:bold; flex:1;" onclick="toggleGroup('${gName}')">${gName} ${openGroups[gName]?'▼':'▲'}</div>
-      <div style="display:flex; gap:5px;">
-        <button onclick="moveGroup('${gName}', -1)" style="padding:4px 8px; min-height:30px; border:1px solid #ccc; background:#fff; border-radius:4px;">↑</button>
-        <button onclick="moveGroup('${gName}', 1)" style="padding:4px 8px; min-height:30px; border:1px solid #ccc; background:#fff; border-radius:4px;">↓</button>
-      </div>`;
+    section.style.gridColumn = "1 / -1";
+    section.innerHTML = `<div style="padding:10px 0; font-weight:bold; color:var(--text-sub); display:flex; justify-content:space-between;" onclick="toggleGroup('${gName}')">
+      ${gName} <span>${openGroups[gName]?'▼':'▲'}</span>
+    </div>`;
     listDiv.appendChild(section);
 
     if(openGroups[gName]) {
-      // カードを表示（中身のソート処理含む）
       let targetList = groups[gName];
       if(sortType === 'count') targetList.sort((a,b) => (b.r.cookCount||0) - (a.r.cookCount||0));
       if(sortType === 'date') targetList.sort((a,b) => new Date(b.r.lastCookedDate||0) - new Date(a.r.lastCookedDate||0));
@@ -355,7 +349,8 @@ function renderList() {
           <div class="card-info">
             <div class="card-title">${obj.r.title}</div>
             <div class="card-sub">${sortType==='date'?(obj.r.lastCookedDate||'未'):('×'+(obj.r.cookCount||0))}</div>
-          </div>`;
+          </div>
+        `;
         card.onclick = () => showDetail(obj.i);
         listDiv.appendChild(card);
       });
@@ -364,20 +359,6 @@ function renderList() {
 }
 
 function toggleGroup(n) { openGroups[n] = !openGroups[n]; renderList(); }
-
-function moveGroup(name, direction) {
-  let idx = groupOrder.indexOf(name);
-  if (idx === -1) return;
-  let newIdx = idx + direction;
-  if (newIdx < 0 || newIdx >= groupOrder.length) return;
-
-  // 順番を入れ替える
-  [groupOrder[idx], groupOrder[newIdx]] = [groupOrder[newIdx], groupOrder[idx]];
-  
-  localStorage.setItem("groupOrder", JSON.stringify(groupOrder));
-  renderList();
-}
-
 function setFilter(f) { currentFilter = f; document.getElementById('btnAll').classList.toggle('active', f==='all'); document.getElementById('btnFav').classList.toggle('active', f==='fav'); renderList(); }
 function clearSearchInput() { document.getElementById("search").value = ""; renderList(); }
 
