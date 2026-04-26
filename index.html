@@ -136,7 +136,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.07
+      v1.08
     
     
     
@@ -328,7 +328,7 @@ function renderList() {
   groupOrder.forEach(gName => {
     if (!groups[gName]) return; // そのグループにレシピがなければ表示しない
 
-    if(openGroups[gName] === undefined) openGroups[gName] = true;
+    if(openGroups[gName] === undefined) openGroups[gName] = false;
     
     let section = document.createElement("div");
     section.style = "grid-column: 1/-1; padding:10px; background:#e5e5ea; border-radius:8px; margin:10px 0 5px; display:flex; justify-content:space-between; align-items:center;";
