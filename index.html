@@ -171,7 +171,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.09
+      v1.10
     
     
     
@@ -360,21 +360,22 @@ function renderList() {
     if (!groups[gName]) return;
 
     // ★修正点：初期値を false (閉じている状態) にする
-    if(openGroups[gName] === undefined) openGroups[gName] = false;
-    
-    let section = document.createElement("div");
-    section.className = "group-header"; // スタイルをクラス指定に変更
-    section.innerHTML = `
-      <div style="font-weight:bold; flex:1; cursor:pointer;" onclick="toggleGroup('${gName}')">
-        ${gName} <span style="font-size:12px; color:var(--text-sub); margin-left:4px;">${openGroups[gName]?'▼':'▶'}</span>
-      </div>
-      <div class="move-btn-group">
-        <button class="move-btn" onclick="moveGroup('${gName}', -1)">↑</button>
-        <button class="move-btn" onclick="moveGroup('${gName}', 1)">↓</button>
-      </div>`;
-    listDiv.appendChild(section);
+　　　if(openGroups[gName] === undefined) openGroups[gName] = false;
+  const isExpanded = key.length > 0 ? true : !!openGroups[gName];
+  
+  let section = document.createElement("div");
+  section.className = "group-header";
+  section.innerHTML = `
+    <div style="font-weight:bold; flex:1; cursor:pointer;" onclick="toggleGroup('${gName}')">
+      ${gName} <span style="font-size:12px; color:var(--text-sub); margin-left:4px;">${isExpanded ? '▼' : '▶'}</span>
+    </div>
+    <div class="move-btn-group">
+      <button class="move-btn" onclick="moveGroup('${gName}', -1)">↑</button>
+      <button class="move-btn" onclick="moveGroup('${gName}', 1)">↓</button>
+    </div>`;
+  listDiv.appendChild(section);
 
-    if(openGroups[gName]) {
+  if(isExpanded) { // openGroups[gName] ではなく、判定後の isExpanded を使う
       // (以下、カード描画の処理はそのまま)
       let targetList = groups[gName];
       if(sortType === 'count') targetList.sort((a,b) => (b.r.cookCount||0) - (a.r.cookCount||0));
