@@ -171,7 +171,7 @@ button.main-btn {
 <div class="container">
   <div id="listPage">
     <div style="font-size: 10px; color: var(--text-sub); text-align: right;">
-      v1.10
+      v1.11
     
     
     
@@ -529,7 +529,7 @@ function saveAndSync() {
 function saveRecipe() {
   if(!title.value) return showToast("タイトルを入力してください");
 
-  // --- 1. 材料データの取得と置換用マップの作成 ---
+  // --- 1. 材料データの取得 ---
   let ingData = [];
   let ingMap = {}; 
   
@@ -540,66 +540,71 @@ function saveRecipe() {
       let ins = row.querySelectorAll("input");
       if(ins[0].value) {
         items.push({name:ins[0].value, amount:ins[1].value});
-        // 【修正】カッコではなく「品名:分量」の形式にする
         itemsText.push(`${ins[0].value}:${ins[1].value}`);
       }
     });
     let gName = box.querySelector(".grp-name").value || "材料";
     if(items.length > 0) {
       ingData.push({name:gName, items});
-      // 「品名:分量、品名:分量」という文字列を作る
       ingMap[gName] = itemsText.join('、');
     }
   });
 
-  // --- 2. 作り方の取得と、古い表記の削除 ＆ 最新への置換 ---
+  // --- 2. 作り方の取得と置換 ---
   let stepData = [];
   document.querySelectorAll(".step-input").forEach(ta => {
     let text = ta.value;
     if(text) {
       Object.keys(ingMap).forEach(groupName => {
-        // 【修正】「グループ名（...）」というパターンを正規表現で探して削除
         const escapedGroupName = groupName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapedGroupName + "（[^）]+）", "g");
         text = text.replace(regex, groupName);
-
-        // 【修正】最新の材料を「グループ名（材料:分量）」の形式で付与
         text = text.replaceAll(groupName, `${groupName}（${ingMap[groupName]}）`);
       });
       stepData.push(text);
     }
   });
 
-  // --- 3. 保存実行 ---
+  // --- 3. レシピデータの作成 ---
   let data = {
-    title: title.value, group: group.value, sourceUrl: sourceUrl.value,
-    image: formImage, ingredients: ingData, steps: stepData,
-    favorite: editIndex!==null ? recipes[editIndex].favorite : false,
-    cookCount: editIndex!==null ? recipes[editIndex].cookCount : 0,
-    lastCookedDate: editIndex!==null ? recipes[editIndex].lastCookedDate : null
+    title: title.value, 
+    group: group.value, 
+    sourceUrl: sourceUrl.value,
+    image: formImage, 
+    ingredients: ingData, 
+    steps: stepData,
+    favorite: editIndex !== null ? recipes[editIndex].favorite : false,
+    cookCount: editIndex !== null ? recipes[editIndex].cookCount : 0,
+    lastCookedDate: editIndex !== null ? recipes[editIndex].lastCookedDate : null
   };
 
-  if(editIndex !== null) recipes[editIndex] = data;
-  else recipes.push(data);
-
-  // --- saveRecipe関数の中、saveAndSync()の直前に追加 ---
-let gValue = group.value || "未分類";
-if (!groupOrder.includes(gValue)) {
-  groupOrder.push(gValue);
-}
-// ------------------------------------------------
-saveAndSync(); 
-// ★ここから追加：バックアップ確認プロンプト
-setTimeout(() => {
-  if (confirm("レシピを保存しました。ついでに全データのバックアップ（ファイル保存）も行いますか？")) {
-    exportData();
+  if(editIndex !== null) {
+    recipes[editIndex] = data;
+  } else {
+    recipes.push(data);
   }
-}, 500); // 保存のトースト表示と重ならないよう、少しだけ遅らせて表示
-clearForm(); 
-showPage('list'); 
-showToast("保存しました");
+
+  // カテゴリーの並び順を更新
+  let gValue = group.value || "未分類";
+  if (!groupOrder.includes(gValue)) {
+    groupOrder.push(gValue);
+  }
+
+  // --- 4. 保存と画面遷移 ---
+  saveAndSync(); 
   
-  saveAndSync(); clearForm(); showPage('list'); showToast("材料表記を更新して保存しました");
+  // 保存完了トーストを表示
+  showToast("保存しました");
+
+  // バックアップ確認を少し遅らせて実行
+  setTimeout(() => {
+    if (confirm("レシピを保存しました。ついでに全データのバックアップも行いますか？")) {
+      exportData();
+    }
+  }, 500);
+
+  clearForm(); 
+  showPage('list'); 
 }
 
 function editRecipe(i) {
